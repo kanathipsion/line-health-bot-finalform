@@ -7,10 +7,7 @@
 </head>
 <body>
   <h1>กรุณากรอกข้อมูลสุขภาพของคุณ</h1>
-  <form action="/submit" method="POST">
-    <!-- Hidden field สำหรับส่ง userId -->
-    <input type="hidden" name="userId" value="{{userId}}">
-
+  <form id="healthForm">
     <label for="sugar">ค่าน้ำตาล:</label><br>
     <input type="number" id="sugar" name="sugar" required><br><br>
 
@@ -23,7 +20,57 @@
     <label for="weight">น้ำหนัก (kg):</label><br>
     <input type="number" id="weight" name="weight" required><br><br>
 
-    <button type="submit">ส่งข้อมูล</button>
+    <input type="hidden" id="userId" value="{{userId}}">
+
+    <button type="button" onclick="sendHealthData()">ส่งข้อมูล</button>
   </form>
+
+  <script>
+    function sendHealthData() {
+      // รับค่าจากฟอร์ม
+      const sugar = document.getElementById('sugar').value;
+      const pressure = document.getElementById('pressure').value;
+      const height = document.getElementById('height').value;
+      const weight = document.getElementById('weight').value;
+      const userId = document.getElementById('userId').value;
+
+      // คำนวณ BMI
+      const bmi = (weight / ((height / 100) ** 2)).toFixed(2);
+      let healthStatus = '';
+      if (bmi < 18.5) healthStatus = 'น้ำหนักน้อยกว่ามาตรฐาน';
+      else if (bmi < 25) healthStatus = 'น้ำหนักปกติ';
+      else if (bmi < 30) healthStatus = 'น้ำหนักเกิน';
+      else healthStatus = 'อ้วน';
+
+      // สร้างข้อความ
+      const messageText = `ผลลัพธ์สุขภาพของคุณ:\n- ค่าน้ำตาล: ${sugar}\n- ค่าความดัน: ${pressure}\n- BMI: ${bmi} (${healthStatus})`;
+
+      // ส่งข้อความไปยัง LINE Messaging API
+      fetch('https://api.line.me/v2/bot/message/push', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer {{YOUR_CHANNEL_ACCESS_TOKEN}}`, // ใส่ Access Token ที่นี่
+        },
+        body: JSON.stringify({
+          to: userId,
+          messages: [
+            { type: 'text', text: messageText },
+            { type: 'sticker', packageId: '1', stickerId: '13' },
+          ],
+        }),
+      })
+        .then((response) => {
+          if (!response.ok) {
+            throw new Error('Error sending message');
+          }
+          alert('ส่งข้อมูลสำเร็จ!');
+        })
+        .catch((error) => {
+          console.error('Error:', error);
+          alert('เกิดข้อผิดพลาดในการส่งข้อมูล');
+        });
+    }
+  </script>
 </body>
 </html>
