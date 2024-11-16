@@ -1,6 +1,6 @@
 const express = require('express');
 const { Client, middleware } = require('@line/bot-sdk');
-const axios = require('axios'); // ใช้สำหรับส่งข้อมูลไปยัง Google Sheets
+const axios = require('axios');
 const path = require('path');
 
 const app = express();
@@ -25,6 +25,11 @@ app.post('/webhook', middleware(config), (req, res) => {
 // เสิร์ฟหน้าเว็บฟอร์ม
 app.get('/form', (req, res) => {
   res.sendFile(path.join(__dirname, 'form.html'));
+});
+
+// เส้นทางหลัก (Route for "/")
+app.get('/', (req, res) => {
+  res.send('Welcome to the LINE Bot Health Check Application!');
 });
 
 // รับข้อมูลจากฟอร์มและส่งผลกลับไปที่ LINE
