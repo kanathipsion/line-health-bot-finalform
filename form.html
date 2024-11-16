@@ -25,31 +25,6 @@
       stickerId = '113'; // อ้วน
     }
 
-    // เรียก API สำหรับบันทึกข้อมูลลง Google Sheets
-    fetch('https://script.google.com/macros/s/AKfycbyL3vKHt5oLMCe2sBcY77OGH0vzyYWQv-A6KBJ-fDvhcceixZ3LEJVHtsa0cpgj0aA0Ag/exec', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        userId: userId,
-        sugar: sugar,
-        pressure: pressure,
-        height: height,
-        weight: weight,
-        bmi: bmi,
-      }),
-    })
-      .then((response) => response.json())
-      .then((data) => {
-        if (data.success) {
-          console.log('Data saved to Google Sheets successfully!');
-        } else {
-          console.error('Error saving data to Google Sheets:', data.message);
-        }
-      })
-      .catch((error) => {
-        console.error('Error:', error);
-      });
-
     // เรียก API สำหรับส่งข้อความและสติกเกอร์ไปยัง LINE
     fetch('/send-message', {
       method: 'POST',
@@ -66,6 +41,28 @@
           throw new Error('Failed to send message');
         }
         alert('ส่งข้อมูลสำเร็จ! กรุณาตรวจสอบ LINE ของคุณ');
+
+        // หากส่งข้อความสำเร็จแล้ว บันทึกข้อมูลลง Google Sheets
+        return fetch('https://script.google.com/macros/s/AKfycbyL3vKHt5oLMCe2sBcY77OGH0vzyYWQv-A6KBJ-fDvhcceixZ3LEJVHtsa0cpgj0aA0Ag/exec', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            userId: userId,
+            sugar: sugar,
+            pressure: pressure,
+            height: height,
+            weight: weight,
+            bmi: bmi,
+          }),
+        });
+      })
+      .then((sheetResponse) => sheetResponse.json())
+      .then((data) => {
+        if (data.success) {
+          console.log('Data saved to Google Sheets successfully!');
+        } else {
+          console.error('Error saving data to Google Sheets:', data.message);
+        }
       })
       .catch((error) => {
         console.error('Error:', error);
