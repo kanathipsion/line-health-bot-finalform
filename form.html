@@ -1,20 +1,28 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <title>แบบฟอร์มข้อมูลสุขภาพ</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Health Form</title>
 </head>
 <body>
   <h1>กรุณากรอกข้อมูลสุขภาพของคุณ</h1>
   <form action="/submit" method="POST">
+    <!-- Hidden field สำหรับส่ง userId -->
     <input type="hidden" name="userId" value="{{userId}}">
+
     <label for="sugar">ค่าน้ำตาล:</label><br>
     <input type="number" id="sugar" name="sugar" required><br><br>
+
     <label for="pressure">ค่าความดัน:</label><br>
     <input type="number" id="pressure" name="pressure" required><br><br>
+
     <label for="height">ส่วนสูง (cm):</label><br>
     <input type="number" id="height" name="height" required><br><br>
+
     <label for="weight">น้ำหนัก (kg):</label><br>
     <input type="number" id="weight" name="weight" required><br><br>
+
     <button type="submit">ส่งข้อมูล</button>
   </form>
 </body>
