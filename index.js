@@ -1,35 +1,70 @@
 const express = require('express');
 const bodyParser = require('body-parser');
 const axios = require('axios');
-const { middleware } = require('@line/bot-sdk');
 
 const app = express();
+const port = process.env.PORT || 3000;
+
+// Middleware
 app.use(bodyParser.json());
+app.use(bodyParser.urlencoded({ extended: true }));
+app.use(express.static('public')); // เสิร์ฟไฟล์ static เช่น form.html
 
-// LINE Configuration
-const config = {
-  channelAccessToken: process.env.LINE_CHANNEL_ACCESS_TOKEN,
-  channelSecret: process.env.LINE_CHANNEL_SECRET,
-};
+// API Endpoint สำหรับส่งข้อความและสติกเกอร์ไปยังผู้ใช้
+app.post('/send-message', (req, res) => {
+  const { userId, message, packageId, stickerId } = req.body;
 
-// Middleware สำหรับ Webhook
-app.use('/webhook', middleware(config));
+  const headers = {
+    'Content-Type': 'application/json',
+    'Authorization': `Bearer ${process.env.LINE_CHANNEL_ACCESS_TOKEN}`, // ใช้ Access Token จาก Config Vars
+  };
 
-// Endpoint สำหรับ Webhook
+  const body = {
+    to: userId,
+    messages: [
+      { type: 'text', text: message },
+      { type: 'sticker', packageId, stickerId },
+    ],
+  };
+
+  axios
+    .post('https://api.line.me/v2/bot/message/push', body, { headers })
+    .then(() => {
+      console.log('Message sent successfully!');
+      res.status(200).send('Message sent successfully!');
+    })
+    .catch((err) => {
+      console.error('Error sending message:', err.response?.data || err.message);
+      res.status(500).send('Error sending message');
+    });
+});
+
+// เสิร์ฟหน้าเว็บฟอร์ม
+app.get('/form', (req, res) => {
+  res.sendFile(__dirname + '/form.html');
+});
+
+// Webhook สำหรับตอบข้อความจากผู้ใช้
 app.post('/webhook', (req, res) => {
   const events = req.body.events;
-  if (!Array.isArray(events)) {
-    return res.status(500).end();
-  }
+  const replyPromises = events.map((event) => {
+    if (event.type === 'message' && event.message.type === 'text') {
+      const userMessage = event.message.text;
 
-  Promise.all(
-    events.map((event) => {
-      if (event.type === 'message' && event.message.type === 'text') {
-        // ตอบกลับข้อความที่ได้รับ
-        return handleTextMessage(event);
+      if (userMessage === 'คำนวนผลสุขภาพ') {
+        const formUrl = `https://${req.headers.host}/form?userId=${event.source.userId}`;
+        const replyMessage = {
+          type: 'text',
+          text: `กรุณากรอกข้อมูลสุขภาพของคุณได้ที่ลิงก์นี้: ${formUrl}`,
+        };
+
+        return replyMessageToUser(event.replyToken, replyMessage);
       }
-    })
-  )
+    }
+    return Promise.resolve(null);
+  });
+
+  Promise.all(replyPromises)
     .then(() => res.status(200).end())
     .catch((err) => {
       console.error(err);
@@ -37,62 +72,22 @@ app.post('/webhook', (req, res) => {
     });
 });
 
-// ฟังก์ชันจัดการข้อความ
-function handleTextMessage(event) {
-  const replyMessage = {
-    type: 'text',
-    text: `คุณส่งข้อความว่า: ${event.message.text}`,
-  };
-
-  return axios.post(
-    'https://api.line.me/v2/bot/message/reply',
-    {
-      replyToken: event.replyToken,
-      messages: [replyMessage],
-    },
-    {
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${process.env.LINE_CHANNEL_ACCESS_TOKEN}`,
-      },
-    }
-  );
-}
-
-// Route สำหรับส่ง Flex Message (จากฟอร์ม)
-app.post('/send-message', (req, res) => {
-  const { userId, flexMessage } = req.body;
-
+// ฟังก์ชันสำหรับตอบข้อความกลับไปยัง LINE
+const replyMessageToUser = (replyToken, message) => {
   const headers = {
     'Content-Type': 'application/json',
     'Authorization': `Bearer ${process.env.LINE_CHANNEL_ACCESS_TOKEN}`,
   };
 
   const body = {
-    to: userId,
-    messages: [
-      {
-        type: 'flex',
-        altText: 'ผลลัพธ์สุขภาพของคุณ',
-        contents: flexMessage,
-      },
-    ],
+    replyToken: replyToken,
+    messages: [message],
   };
 
-  axios
-    .post('https://api.line.me/v2/bot/message/push', body, { headers })
-    .then(() => {
-      console.log('Flex Message sent successfully!');
-      res.status(200).send('Flex Message sent successfully!');
-    })
-    .catch((err) => {
-      console.error('Error sending Flex Message:', err.response?.data || err.message);
-      res.status(500).send('Error sending Flex Message');
-    });
-});
+  return axios.post('https://api.line.me/v2/bot/message/reply', body, { headers });
+};
 
-// เริ่มต้นเซิร์ฟเวอร์
-const port = process.env.PORT || 3000;
+// เริ่มเซิร์ฟเวอร์
 app.listen(port, () => {
   console.log(`Server running on port ${port}`);
 });
