@@ -1,13 +1,14 @@
 const express = require('express');
 const { Client, middleware } = require('@line/bot-sdk');
+const axios = require('axios'); // ใช้สำหรับส่งข้อมูลไปยัง Google Sheets
 const path = require('path');
 
 const app = express();
 
 // LINE Bot configurations
 const config = {
-  channelAccessToken: process.env.LINE_CHANNEL_ACCESS_TOKEN, // ใส่ Access Token ที่ถูกต้อง
-  channelSecret: process.env.LINE_CHANNEL_SECRET, // ใส่ Secret ที่ถูกต้อง
+  channelAccessToken: process.env.LINE_CHANNEL_ACCESS_TOKEN,
+  channelSecret: process.env.LINE_CHANNEL_SECRET,
 };
 const client = new Client(config);
 
@@ -23,7 +24,48 @@ app.post('/webhook', middleware(config), (req, res) => {
 
 // เสิร์ฟหน้าเว็บฟอร์ม
 app.get('/form', (req, res) => {
-  res.sendFile(path.join(__dirname, 'form.html')); // เส้นทางไปยังไฟล์ form.html
+  res.sendFile(path.join(__dirname, 'form.html'));
+});
+
+// รับข้อมูลจากฟอร์มและส่งผลกลับไปที่ LINE
+app.post('/submit', express.urlencoded({ extended: true }), (req, res) => {
+  const { userId, sugar, pressure, height, weight } = req.body;
+
+  // คำนวณ BMI
+  const bmi = (weight / ((height / 100) ** 2)).toFixed(2);
+  let healthStatus = '';
+  if (bmi < 18.5) healthStatus = 'น้ำหนักน้อยกว่ามาตรฐาน';
+  else if (bmi < 25) healthStatus = 'น้ำหนักปกติ';
+  else if (bmi < 30) healthStatus = 'น้ำหนักเกิน';
+  else healthStatus = 'อ้วน';
+
+  // ส่งข้อมูลไปยัง Google Sheets
+  const data = { userId, sugar, pressure, height, weight, bmi };
+  axios
+    .post(process.env.GOOGLE_SCRIPT_URL, data)
+    .then(() => console.log('Data saved to Google Sheets'))
+    .catch((err) => console.error('Error saving to Google Sheets:', err));
+
+  // ส่งข้อความและ Sticker กลับไปยัง LINE
+  const replyMessages = [
+    {
+      type: 'text',
+      text: `ผลลัพธ์สุขภาพของคุณ:\n- ค่าน้ำตาล: ${sugar}\n- ค่าความดัน: ${pressure}\n- BMI: ${bmi} (${healthStatus})`,
+    },
+    {
+      type: 'sticker',
+      packageId: '1', // ตัวอย่าง Sticker
+      stickerId: '13', // ตัวอย่าง Sticker
+    },
+  ];
+
+  client
+    .pushMessage(userId, replyMessages)
+    .then(() => res.send('ข้อมูลถูกบันทึกแล้ว!'))
+    .catch((err) => {
+      console.error(err);
+      res.status(500).send('เกิดข้อผิดพลาด');
+    });
 });
 
 // ฟังก์ชันจัดการข้อความจากผู้ใช้
@@ -50,5 +92,5 @@ function handleEvent(event) {
 // Start server
 const port = process.env.PORT || 3000;
 app.listen(port, () => {
-  console.log(`Server running on ${port}`);
+  console.log(`Server running on port ${port}`);
 });
