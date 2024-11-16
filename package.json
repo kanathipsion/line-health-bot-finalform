@@ -1,0 +1,14 @@
+{
+  "name": "line-health-bot",
+  "version": "1.0.0",
+  "description": "LINE bot for health data evaluation",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "dependencies": {
+    "@line/bot-sdk": "^7.4.0",
+    "axios": "^0.21.1",
+    "express": "^4.17.1"
+  }
+}
