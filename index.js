@@ -1,6 +1,6 @@
 const express = require('express');
 const { Client, middleware } = require('@line/bot-sdk');
-const path = require('path'); // นำเข้าโมดูล path
+const path = require('path');
 
 const app = express();
 
@@ -9,6 +9,7 @@ const config = {
   channelAccessToken: process.env.LINE_CHANNEL_ACCESS_TOKEN, // ใส่ Access Token ที่ถูกต้อง
   channelSecret: process.env.LINE_CHANNEL_SECRET, // ใส่ Secret ที่ถูกต้อง
 };
+
 const client = new Client(config);
 
 // Middleware สำหรับ LINE webhook
@@ -16,12 +17,12 @@ app.use(middleware(config));
 
 // เสิร์ฟหน้าเว็บฟอร์ม
 app.get('/form', (req, res) => {
-  res.sendFile(path.join(__dirname, 'form.html'), (err) => {
-    if (err) {
-      console.error('Error sending file:', err); // แสดง log ข้อผิดพลาดใน console
-      res.status(500).send('Internal Server Error');
-    }
-  });
+  const userId = req.query.userId; // ดึง userId จาก query string
+  if (!userId) {
+    return res.status(400).send('Missing userId'); // หากไม่มี userId ให้แสดงข้อผิดพลาด
+  }
+
+  res.sendFile(path.join(__dirname, 'form.html')); // ส่งไฟล์ form.html กลับไปยังผู้ใช้
 });
 
 // Webhook สำหรับรับข้อความจากผู้ใช้
@@ -29,7 +30,7 @@ app.post('/webhook', (req, res) => {
   Promise.all(req.body.events.map(handleEvent))
     .then((result) => res.json(result))
     .catch((err) => {
-      console.error(err); // แสดง log ข้อผิดพลาดใน console
+      console.error(err);
       res.status(500).end();
     });
 });
@@ -48,10 +49,18 @@ function handleEvent(event) {
       };
 
       return client.replyMessage(event.replyToken, replyMessage);
+    } else {
+      // กรณีข้อความไม่ตรงกับ "คำนวนผลสุขภาพ"
+      const replyMessage = {
+        type: 'text',
+        text: 'ขอโทษครับ ไม่เข้าใจข้อความของคุณ ลองพิมพ์ "คำนวนผลสุขภาพ" เพื่อเริ่มต้น',
+      };
+
+      return client.replyMessage(event.replyToken, replyMessage);
     }
   }
 
-  // ไม่ตอบกลับข้อความอื่น ๆ ที่ไม่เกี่ยวข้อง
+  // ไม่ตอบกลับเหตุการณ์อื่น ๆ
   return Promise.resolve(null);
 }
 
