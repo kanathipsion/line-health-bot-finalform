@@ -1,11 +1,9 @@
 const express = require('express');
 const { Client } = require('@line/bot-sdk');
-const axios = require('axios');
+const path = require('path');
 
 const app = express();
-
-// Middleware สำหรับรับข้อมูลจากฟอร์ม
-app.use(express.urlencoded({ extended: true }));
+app.use(express.json()); // รองรับการ parse JSON payload จาก body
 
 // LINE Bot configurations
 const config = {
@@ -19,80 +17,66 @@ app.get('/form', (req, res) => {
   res.sendFile(path.join(__dirname, 'form.html'));
 });
 
-// รับข้อมูลจากฟอร์มและประมวลผล
-app.post('/submit-form', (req, res) => {
-  const { sugar, pressure, weight, height, userId } = req.body;
+// รับข้อมูลจากฟอร์มและตอบกลับข้อความ
+app.post('/submit', (req, res) => {
+  try {
+    const { userId, sugar, pressure, height, weight } = req.body;
 
-  // ดึงข้อมูลโปรไฟล์ผู้ใช้จาก LINE OA
-  client.getProfile(userId)
-    .then((profile) => {
-      const displayName = profile.displayName; // ชื่อที่แสดงของผู้ใช้
+    if (!userId || !sugar || !pressure || !height || !weight) {
+      res.status(400).send('ข้อมูลไม่ครบถ้วน');
+      return;
+    }
 
-      // คำนวณค่า BMI
-      const bmi = (weight / Math.pow(height / 100, 2)).toFixed(2);
-      let status = '';
-      let advice = '';
+    // คำนวณ BMI
+    const heightInMeters = height / 100;
+    const bmi = (weight / (heightInMeters * heightInMeters)).toFixed(2);
 
-      // ประเมินผลสุขภาพ
-      if (sugar <= 100 && pressure <= 120 && bmi >= 18.5 && bmi <= 24.9) {
-        status = 'ปกติ';
-        advice = 'สุขภาพของคุณอยู่ในเกณฑ์ปกติ';
-      } else if ((sugar > 100 && sugar <= 125) || (pressure > 120 && pressure <= 140) || (bmi >= 25 && bmi <= 29.9)) {
-        status = 'เสี่ยง';
-        advice = 'สุขภาพของคุณอยู่ในระดับเสี่ยง';
-      } else {
-        status = 'อันตราย';
-        advice = 'สุขภาพของคุณอยู่ในระดับอันตราย';
-      }
+    // กำหนดสถานะสุขภาพตาม BMI
+    let status = '';
+    let stickerId = '13'; // ค่า default stickerId
 
-      // ส่งข้อความและสติกเกอร์ไปยัง LINE
-      client.pushMessage(userId, {
+    if (bmi < 18.5) {
+      status = 'น้ำหนักน้อย';
+      stickerId = '11537';
+    } else if (bmi < 24.9) {
+      status = 'สุขภาพดี';
+      stickerId = '13';
+    } else if (bmi < 29.9) {
+      status = 'น้ำหนักเกิน';
+      stickerId = '110';
+    } else {
+      status = 'อ้วน';
+      stickerId = '111';
+    }
+
+    // เตรียมข้อความที่จะส่งกลับ
+    const replyMessages = [
+      {
         type: 'text',
-        text: `สวัสดีคุณ ${displayName}, กำลังประมวลผลข้อมูลของคุณ กรุณารอสักครู่...`,
-      }).then(() => {
-        let stickerId;
-        if (status === 'ปกติ') {
-          stickerId = '52002739'; // Sticker ID สีเขียว
-        } else if (status === 'เสี่ยง') {
-          stickerId = '52002741'; // Sticker ID สีเหลือง
-        } else {
-          stickerId = '52002747'; // Sticker ID สีแดง
-        }
+        text: `ผลลัพธ์สุขภาพของคุณ:\n- ค่าน้ำตาล: ${sugar}\n- ค่าความดัน: ${pressure}\n- BMI: ${bmi} (${status})`,
+      },
+      {
+        type: 'sticker',
+        packageId: '1',
+        stickerId: stickerId,
+      },
+    ];
 
-        return client.pushMessage(userId, {
-          type: 'sticker',
-          packageId: '1',
-          stickerId: stickerId,
-        });
-      }).then(() => {
-        // บันทึกข้อมูลลงใน Google Sheets หลังจากการส่งข้อความและสติกเกอร์สำเร็จ
-        return axios.post('YOUR_GOOGLE_APPS_SCRIPT_URL', {
-          userId: userId,
-          displayName: displayName,
-          sugarLevel: sugar,
-          pressureLevel: pressure,
-          weight: weight,
-          height: height,
-          bmi: bmi,
-          healthStatus: status,
-          advice: advice
-        });
-      }).then(response => {
-        console.log('Data sent to Google Sheets:', response.data);
-        res.send('<h1>ข้อมูลของคุณได้รับการบันทึกแล้ว</h1>');
-      }).catch(error => {
-        console.error('Error in process:', error);
-        res.status(500).send('Error processing request');
+    // ส่งข้อความกลับไปยัง LINE
+    client.pushMessage(userId, replyMessages)
+      .then(() => res.send('ส่งข้อความสำเร็จ!'))
+      .catch((err) => {
+        console.error('Error sending message to LINE:', err);
+        res.status(500).send('เกิดข้อผิดพลาดในการส่งข้อความ');
       });
-    })
-    .catch((err) => {
-      console.error('Error getting profile:', err);
-      res.status(500).send('Error retrieving user profile');
-    });
+  } catch (error) {
+    console.error('Error in /submit:', error);
+    res.status(500).send('เกิดข้อผิดพลาดในการประมวลผล');
+  }
 });
 
 // Start server
 const port = process.env.PORT || 3000;
 app.listen(port, () => {
-  console.log(`Server running on ${port}`);
+  console.log(`Server running on port ${port}`);
 });
