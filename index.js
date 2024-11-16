@@ -1,6 +1,6 @@
 const express = require('express');
 const { Client, middleware } = require('@line/bot-sdk');
-const path = require('path');
+const path = require('path'); // นำเข้าโมดูล path
 
 const app = express();
 
@@ -36,7 +36,7 @@ function handleEvent(event) {
 
     // ตรวจสอบว่าข้อความที่ผู้ใช้พิมพ์คือ "คำนวนผลสุขภาพ"
     if (userMessage === 'คำนวนผลสุขภาพ') {
-      const formUrl = `https://line-bot-health-check-477c415b127f.herokuapp.com/form?userId=${event.source.userId}`; // URL ของฟอร์มที่คุณใช้
+      const formUrl = `https://line-bot-health-check-477c415b127f.herokuapp.com/form?userId=${event.source.userId}`; // URL ของฟอร์ม
       const replyMessage = {
         type: 'text',
         text: `กรุณากรอกข้อมูลสุขภาพของคุณได้ที่ลิงก์นี้: ${formUrl}`,
