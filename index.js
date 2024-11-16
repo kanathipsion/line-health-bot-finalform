@@ -16,7 +16,12 @@ app.use(middleware(config));
 
 // เสิร์ฟหน้าเว็บฟอร์ม
 app.get('/form', (req, res) => {
-  res.sendFile(path.join(__dirname, 'form.html')); // เส้นทางไปยังไฟล์ form.html
+  res.sendFile(path.join(__dirname, 'form.html'), (err) => {
+    if (err) {
+      console.error('Error sending file:', err); // แสดง log ข้อผิดพลาดใน console
+      res.status(500).send('Internal Server Error');
+    }
+  });
 });
 
 // Webhook สำหรับรับข้อความจากผู้ใช้
@@ -24,7 +29,7 @@ app.post('/webhook', (req, res) => {
   Promise.all(req.body.events.map(handleEvent))
     .then((result) => res.json(result))
     .catch((err) => {
-      console.error(err);
+      console.error(err); // แสดง log ข้อผิดพลาดใน console
       res.status(500).end();
     });
 });
