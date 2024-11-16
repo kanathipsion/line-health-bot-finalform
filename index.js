@@ -36,7 +36,7 @@ function handleEvent(event) {
 
     // ถ้าผู้ใช้พิมพ์ "คำนวนผลสุขภาพ"
     if (userMessage === 'คำนวนผลสุขภาพ') {
-      const formUrl = `https://<app-name>.herokuapp.com/form?userId=${event.source.userId}`;
+      const formUrl = `https://line-bot-health-check-477c415b127f.herokuapp.com/form?userId=${event.source.userId}`;
       const replyMessage = {
         type: 'text',
         text: `กรุณากรอกข้อมูลสุขภาพของคุณที่ลิงก์นี้: ${formUrl}`,
