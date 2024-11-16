@@ -1,5 +1,6 @@
 const express = require('express');
 const { Client, middleware } = require('@line/bot-sdk');
+const path = require('path');
 
 const app = express();
 
@@ -12,6 +13,11 @@ const client = new Client(config);
 
 // Middleware สำหรับ LINE webhook
 app.use(middleware(config));
+
+// เสิร์ฟหน้าเว็บฟอร์ม
+app.get('/form', (req, res) => {
+  res.sendFile(path.join(__dirname, 'form.html')); // เส้นทางไปยังไฟล์ form.html
+});
 
 // Webhook สำหรับรับข้อความจากผู้ใช้
 app.post('/webhook', (req, res) => {
