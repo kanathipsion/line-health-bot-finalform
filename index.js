@@ -1,55 +1,57 @@
 const express = require('express');
 const { Client, middleware } = require('@line/bot-sdk');
+const path = require('path'); // นำเข้าโมดูล path
 
 const app = express();
 
 // LINE Bot configurations
 const config = {
-  channelAccessToken: process.env.LINE_CHANNEL_ACCESS_TOKEN,
-  channelSecret: process.env.LINE_CHANNEL_SECRET,
+  channelAccessToken: process.env.LINE_CHANNEL_ACCESS_TOKEN, // ใส่ Access Token ที่ถูกต้อง
+  channelSecret: process.env.LINE_CHANNEL_SECRET, // ใส่ Secret ที่ถูกต้อง
 };
-
 const client = new Client(config);
 
-// Webhook Route
+// Middleware สำหรับ LINE webhook
+app.use(middleware(config));
+
+// เสิร์ฟหน้าเว็บฟอร์ม
+app.get('/form', (req, res) => {
+  res.sendFile(path.join(__dirname, 'form.html')); // เส้นทางไปยังไฟล์ form.html
+});
+
+// Webhook สำหรับรับข้อความจากผู้ใช้
 app.post('/webhook', (req, res) => {
-  console.log('Webhook called');
   Promise.all(req.body.events.map(handleEvent))
-    .then((result) => {
-      console.log('Result:', result);
-      res.json(result);
-    })
+    .then((result) => res.json(result))
     .catch((err) => {
-      console.error('Error handling event:', err);
+      console.error(err);
       res.status(500).end();
     });
 });
 
-// Handle Event Function
+// ฟังก์ชันเพื่อจัดการข้อความจากผู้ใช้
 function handleEvent(event) {
-  console.log('Received event:', JSON.stringify(event, null, 2));
-
   if (event.type === 'message' && event.message.type === 'text') {
     const userMessage = event.message.text;
 
+    // ตรวจสอบว่าข้อความที่ผู้ใช้พิมพ์คือ "คำนวนผลสุขภาพ"
     if (userMessage === 'คำนวนผลสุขภาพ') {
-      const formUrl = `https://line-bot-health-check-477c415b127f.herokuapp.com/form?userId=${event.source.userId}`;
+      const formUrl = `https://line-bot-health-check-477c415b127f.herokuapp.com/form?userId=${event.source.userId}`; // URL ของฟอร์ม
       const replyMessage = {
         type: 'text',
         text: `กรุณากรอกข้อมูลสุขภาพของคุณได้ที่ลิงก์นี้: ${formUrl}`,
       };
 
-      return client.replyMessage(event.replyToken, replyMessage)
-        .then(() => console.log('Message sent successfully'))
-        .catch((err) => console.error('Error sending message:', err));
+      return client.replyMessage(event.replyToken, replyMessage);
     }
   }
 
+  // ไม่ตอบกลับข้อความอื่น ๆ ที่ไม่เกี่ยวข้อง
   return Promise.resolve(null);
 }
 
 // Start server
 const port = process.env.PORT || 3000;
 app.listen(port, () => {
-  console.log(`Server running on port ${port}`);
+  console.log(`Server running on ${port}`);
 });
