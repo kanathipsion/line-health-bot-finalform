@@ -12,21 +12,18 @@ const config = {
 const client = new Client(config);
 
 // Middleware สำหรับ LINE webhook
-app.use(middleware(config));
-
-// เสิร์ฟหน้าเว็บฟอร์ม
-app.get('/form', (req, res) => {
-  res.sendFile(path.join(__dirname, 'form.html')); // เส้นทางไปยังไฟล์ form.html
-});
-
-// Webhook สำหรับรับข้อความจากผู้ใช้
-app.post('/webhook', (req, res) => {
+app.post('/webhook', middleware(config), (req, res) => {
   Promise.all(req.body.events.map(handleEvent))
     .then((result) => res.json(result))
     .catch((err) => {
       console.error(err);
       res.status(500).end();
     });
+});
+
+// เสิร์ฟหน้าเว็บฟอร์ม
+app.get('/form', (req, res) => {
+  res.sendFile(path.join(__dirname, 'form.html')); // เส้นทางไปยังไฟล์ form.html
 });
 
 // ฟังก์ชันจัดการข้อความจากผู้ใช้
@@ -36,7 +33,7 @@ function handleEvent(event) {
 
     // ถ้าผู้ใช้พิมพ์ "คำนวนผลสุขภาพ"
     if (userMessage === 'คำนวนผลสุขภาพ') {
-      const formUrl = `https://line-bot-health-check-477c415b127f.herokuapp.com?userId=${event.source.userId}`;
+      const formUrl = `https://line-bot-health-check-477c415b127f.herokuapp.com/form?userId=${event.source.userId}`;
       const replyMessage = {
         type: 'text',
         text: `กรุณากรอกข้อมูลสุขภาพของคุณที่ลิงก์นี้: ${formUrl}`,
@@ -53,5 +50,5 @@ function handleEvent(event) {
 // Start server
 const port = process.env.PORT || 3000;
 app.listen(port, () => {
-  console.log(`Server running on port ${port}`);
+  console.log(`Server running on ${port}`);
 });
