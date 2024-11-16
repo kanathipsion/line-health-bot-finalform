@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Health Data Form</title>
+</head>
+<body>
+  <h1>กรอกข้อมูลสุขภาพของคุณ</h1>
+  <form action="/submit-form" method="post">
+    <input type="hidden" id="userId" name="userId">
+    <label for="sugar">ค่าน้ำตาล (mg/dL):</label>
+    <input type="number" id="sugar" name="sugar" required><br><br>
+
+    <label for="pressure">ค่าความดัน (mmHg):</label>
+    <input type="number" id="pressure" name="pressure" required><br><br>
+
+    <label for="weight">น้ำหนัก (กก.):</label>
+    <input type="number" id="weight" name="weight" required><br><br>
+
+    <label for="height">ส่วนสูง (ซม.):</label>
+    <input type="number" id="height" name="height" required><br><br>
+
+    <input type="submit" value="ส่งข้อมูล">
+  </form>
+
+  <script>
+    // ดึง User ID จาก query parameter และใส่ลงในฟิลด์ที่ซ่อนอยู่
+    function getQueryParam(param) {
+      const urlParams = new URLSearchParams(window.location.search);
+      return urlParams.get(param);
+    }
+    document.getElementById('userId').value = getQueryParam('userId');
+  </script>
+</body>
+</html>
