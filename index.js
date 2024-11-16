@@ -1,6 +1,5 @@
 const express = require('express');
 const { Client, middleware } = require('@line/bot-sdk');
-const axios = require('axios');
 const path = require('path');
 
 const app = express();
@@ -43,13 +42,6 @@ app.post('/submit', express.urlencoded({ extended: true }), (req, res) => {
   else if (bmi < 25) healthStatus = 'น้ำหนักปกติ';
   else if (bmi < 30) healthStatus = 'น้ำหนักเกิน';
   else healthStatus = 'อ้วน';
-
-  // ส่งข้อมูลไปยัง Google Sheets
-  const data = { userId, sugar, pressure, height, weight, bmi };
-  axios
-    .post(process.env.GOOGLE_SCRIPT_URL, data)
-    .then(() => console.log('Data saved to Google Sheets'))
-    .catch((err) => console.error('Error saving to Google Sheets:', err));
 
   // ส่งข้อความและ Sticker กลับไปยัง LINE
   const replyMessages = [
