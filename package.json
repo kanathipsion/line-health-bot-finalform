@@ -9,7 +9,6 @@
   "dependencies": {
     "@line/bot-sdk": "^7.4.0",
     "axios": "^0.21.1",
-    "express": "^4.17.1",
-    "firebase-admin": "^11.0.0" // เพิ่ม firebase-admin
+    "express": "^4.17.1"
   }
 }
