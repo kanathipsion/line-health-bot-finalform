@@ -1,6 +1,15 @@
 const express = require('express');
 const bodyParser = require('body-parser');
-const axios = require('axios');
+const { Client, middleware } = require('@line/bot-sdk');
+const { google } = require('googleapis');
+const path = require('path');
+
+// LINE Bot configuration
+const config = {
+  channelAccessToken: process.env.LINE_CHANNEL_ACCESS_TOKEN,
+  channelSecret: process.env.LINE_CHANNEL_SECRET,
+};
+const client = new Client(config);
 
 const app = express();
 const port = process.env.PORT || 3000;
@@ -10,43 +19,18 @@ app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(express.static('public')); // เสิร์ฟไฟล์ static เช่น form.html
 
-// API Endpoint สำหรับส่งข้อความและสติกเกอร์ไปยังผู้ใช้
-app.post('/send-message', (req, res) => {
-  const { userId, message, packageId, stickerId } = req.body;
-
-  const headers = {
-    'Content-Type': 'application/json',
-    'Authorization': `Bearer ${process.env.LINE_CHANNEL_ACCESS_TOKEN}`, // ใช้ Access Token จาก Config Vars
-  };
-
-  const body = {
-    to: userId,
-    messages: [
-      { type: 'text', text: message },
-      { type: 'sticker', packageId, stickerId },
-    ],
-  };
-
-  axios
-    .post('https://api.line.me/v2/bot/message/push', body, { headers })
-    .then(() => {
-      console.log('Message sent successfully!');
-      res.status(200).send('Message sent successfully!');
-    })
-    .catch((err) => {
-      console.error('Error sending message:', err.response?.data || err.message);
-      res.status(500).send('Error sending message');
-    });
+// Google Sheets setup
+const auth = new google.auth.GoogleAuth({
+  keyFile: 'credentials.json', // ใส่ไฟล์ Service Account
+  scopes: ['https://www.googleapis.com/auth/spreadsheets'],
 });
+const sheets = google.sheets({ version: 'v4', auth });
+const spreadsheetId = '1myXIPPbUzh340BqAmjyylFgBs9Dyuu1FOy8QDXO9DxE'; // ID ของ Google Sheets
 
-// เสิร์ฟหน้าเว็บฟอร์ม
-app.get('/form', (req, res) => {
-  res.sendFile(__dirname + '/form.html');
-});
-
-// Webhook สำหรับตอบข้อความจากผู้ใช้
-app.post('/webhook', (req, res) => {
+// Webhook สำหรับ LINE
+app.post('/webhook', middleware(config), (req, res) => {
   const events = req.body.events;
+
   const replyPromises = events.map((event) => {
     if (event.type === 'message' && event.message.type === 'text') {
       const userMessage = event.message.text;
@@ -57,8 +41,7 @@ app.post('/webhook', (req, res) => {
           type: 'text',
           text: `กรุณากรอกข้อมูลสุขภาพของคุณได้ที่ลิงก์นี้: ${formUrl}`,
         };
-
-        return replyMessageToUser(event.replyToken, replyMessage);
+        return client.replyMessage(event.replyToken, replyMessage);
       }
     }
     return Promise.resolve(null);
@@ -72,22 +55,54 @@ app.post('/webhook', (req, res) => {
     });
 });
 
-// ฟังก์ชันสำหรับตอบข้อความกลับไปยัง LINE
-const replyMessageToUser = (replyToken, message) => {
-  const headers = {
-    'Content-Type': 'application/json',
-    'Authorization': `Bearer ${process.env.LINE_CHANNEL_ACCESS_TOKEN}`,
-  };
+// เสิร์ฟหน้าเว็บฟอร์ม
+app.get('/form', (req, res) => {
+  res.sendFile(path.join(__dirname, 'form.html'));
+});
 
-  const body = {
-    replyToken: replyToken,
-    messages: [message],
-  };
+// ฟังก์ชันบันทึกข้อมูลลง Google Sheets
+async function appendToSheet(values) {
+  const resource = { values: [values] };
+  try {
+    const result = await sheets.spreadsheets.values.append({
+      spreadsheetId,
+      range: 'Sheet1!A1',
+      valueInputOption: 'RAW',
+      resource,
+    });
+    console.log(`${result.data.updates.updatedCells} cells appended.`);
+  } catch (error) {
+    console.error('Error appending to sheet:', error);
+  }
+}
 
-  return axios.post('https://api.line.me/v2/bot/message/reply', body, { headers });
-};
+// Route สำหรับบันทึกข้อมูล
+app.post('/submit', async (req, res) => {
+  const { sugar, pressure, height, weight, userId } = req.body;
 
-// เริ่มเซิร์ฟเวอร์
+  // คำนวณ BMI
+  const bmi = (weight / ((height / 100) ** 2)).toFixed(2);
+
+  // บันทึกข้อมูลลง Google Sheets
+  const values = [userId, sugar, pressure, height, weight, bmi];
+  await appendToSheet(values);
+
+  // สร้างข้อความผลลัพธ์
+  const healthMessage = `ผลลัพธ์สุขภาพของคุณ:\n- ค่าน้ำตาล: ${sugar}\n- ค่าความดัน: ${pressure}\n- BMI: ${bmi}`;
+  const stickerId = bmi < 18.5 ? '13' : bmi < 25 ? '110' : bmi < 30 ? '111' : '112'; // เลือก Sticker ตาม BMI
+
+  // ส่งข้อความและ Sticker กลับไปยัง LINE
+  client.pushMessage(userId, {
+    messages: [
+      { type: 'text', text: healthMessage },
+      { type: 'sticker', packageId: '1', stickerId },
+    ],
+  });
+
+  res.send('ข้อมูลของคุณถูกส่งแล้ว!');
+});
+
+// Start server
 app.listen(port, () => {
   console.log(`Server running on port ${port}`);
 });
