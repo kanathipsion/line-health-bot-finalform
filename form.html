@@ -1,59 +1,55 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Health Form</title>
 </head>
 <body>
-  <h1>กรอกข้อมูลสุขภาพของคุณ</h1>
+  <h1>กรอกข้อมูลสุขภาพ</h1>
   <form id="healthForm">
-    <label for="sugar">ค่าน้ำตาล (mg/dL):</label><br>
-    <input type="number" id="sugar" name="sugar" required><br><br>
+    <label for="sugar">ค่าน้ำตาล:</label>
+    <input type="number" id="sugar" name="sugar" required /><br />
 
-    <label for="pressure">ค่าความดัน (mmHg):</label><br>
-    <input type="number" id="pressure" name="pressure" required><br><br>
+    <label for="pressure">ค่าความดัน:</label>
+    <input type="number" id="pressure" name="pressure" required /><br />
 
-    <label for="height">ส่วนสูง (cm):</label><br>
-    <input type="number" id="height" name="height" required><br><br>
+    <label for="bmi">BMI:</label>
+    <input type="number" id="bmi" name="bmi" required /><br />
 
-    <label for="weight">น้ำหนัก (kg):</label><br>
-    <input type="number" id="weight" name="weight" required><br><br>
+    <input type="hidden" id="userId" name="userId" value="" />
 
-    <input type="hidden" id="userId" name="userId" value="">
     <button type="submit">ส่งข้อมูล</button>
   </form>
 
   <script>
-    // ดึงค่า userId จาก URL
     const urlParams = new URLSearchParams(window.location.search);
     const userId = urlParams.get('userId');
     document.getElementById('userId').value = userId;
 
-    // ส่งข้อมูลไปยังเซิร์ฟเวอร์
-    document.getElementById('healthForm').addEventListener('submit', (event) => {
+    const form = document.getElementById('healthForm');
+    form.addEventListener('submit', async (event) => {
       event.preventDefault();
 
-      const formData = new FormData(document.getElementById('healthForm'));
-      const data = Object.fromEntries(formData.entries());
+      const formData = new FormData(form);
+      const data = Object.fromEntries(formData);
 
-      fetch('/submit', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(data),
-      })
-        .then((response) => {
-          if (!response.ok) {
-            throw new Error('Failed to submit data');
-          }
-          alert('ข้อมูลถูกส่งสำเร็จ!');
-        })
-        .catch((error) => {
-          console.error('Error:', error);
-          alert('เกิดข้อผิดพลาด: ' + error.message);
+      try {
+        const response = await fetch('/submit-form', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(data),
         });
+
+        if (response.ok) {
+          alert('ข้อมูลถูกส่งเรียบร้อยแล้ว');
+        } else {
+          alert('เกิดข้อผิดพลาดในการส่งข้อมูล');
+        }
+      } catch (error) {
+        console.error('Error submitting form:', error);
+        alert('เกิดข้อผิดพลาด');
+      }
     });
   </script>
 </body>
