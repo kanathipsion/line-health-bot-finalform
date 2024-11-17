@@ -1,51 +1,93 @@
 const express = require('express');
-const { Client, middleware } = require('@line/bot-sdk');
-const path = require('path');
+const bodyParser = require('body-parser');
+const axios = require('axios');
 
 const app = express();
+const port = process.env.PORT || 3000;
 
-// LINE Bot configurations
-const config = {
-  channelAccessToken: process.env.LINE_CHANNEL_ACCESS_TOKEN,
-  channelSecret: process.env.LINE_CHANNEL_SECRET,
-};
-const client = new Client(config);
+// Middleware
+app.use(bodyParser.json());
+app.use(bodyParser.urlencoded({ extended: true }));
+app.use(express.static('public')); // เสิร์ฟไฟล์ static เช่น form.html
 
-// Middleware for LINE webhook
-app.use(middleware(config));
+// API Endpoint สำหรับส่งข้อความและสติกเกอร์ไปยังผู้ใช้
+app.post('/send-message', (req, res) => {
+  const { userId, message, packageId, stickerId } = req.body;
 
-// Serve the form page
-app.get('/form', (req, res) => {
-  res.sendFile(path.join(__dirname, 'form.html'));
+  const headers = {
+    'Content-Type': 'application/json',
+    'Authorization': `Bearer ${process.env.LINE_CHANNEL_ACCESS_TOKEN}`, // ใช้ Access Token จาก Config Vars
+  };
+
+  const body = {
+    to: userId,
+    messages: [
+      { type: 'text', text: message },
+      { type: 'sticker', packageId, stickerId },
+    ],
+  };
+
+  axios
+    .post('https://api.line.me/v2/bot/message/push', body, { headers })
+    .then(() => {
+      console.log('Message sent successfully!');
+      res.status(200).send('Message sent successfully!');
+    })
+    .catch((err) => {
+      console.error('Error sending message:', err.response?.data || err.message);
+      res.status(500).send('Error sending message');
+    });
 });
 
-// Webhook for LINE messages
+// เสิร์ฟหน้าเว็บฟอร์ม
+app.get('/form', (req, res) => {
+  res.sendFile(__dirname + '/form.html');
+});
+
+// Webhook สำหรับตอบข้อความจากผู้ใช้
 app.post('/webhook', (req, res) => {
-  Promise.all(req.body.events.map(handleEvent))
-    .then((result) => res.json(result))
+  const events = req.body.events;
+  const replyPromises = events.map((event) => {
+    if (event.type === 'message' && event.message.type === 'text') {
+      const userMessage = event.message.text;
+
+      if (userMessage === 'คำนวนผลสุขภาพ') {
+        const formUrl = `https://${req.headers.host}/form?userId=${event.source.userId}`;
+        const replyMessage = {
+          type: 'text',
+          text: `กรุณากรอกข้อมูลสุขภาพของคุณได้ที่ลิงก์นี้: ${formUrl}`,
+        };
+
+        return replyMessageToUser(event.replyToken, replyMessage);
+      }
+    }
+    return Promise.resolve(null);
+  });
+
+  Promise.all(replyPromises)
+    .then(() => res.status(200).end())
     .catch((err) => {
       console.error(err);
       res.status(500).end();
     });
 });
 
-// Handle LINE message events
-function handleEvent(event) {
-  if (event.type === 'message' && event.message.type === 'text') {
-    if (event.message.text === 'คำนวนผลสุขภาพ') {
-      const formUrl = `https://line-bot-health-check-477c415b127f.herokuapp.com/form?userId=${event.source.userId}`;
-      const replyMessage = {
-        type: 'text',
-        text: `กรุณากรอกข้อมูลสุขภาพของคุณได้ที่ลิงก์นี้: ${formUrl}`
-      };
-      return client.replyMessage(event.replyToken, replyMessage);
-    }
-  }
-  return Promise.resolve(null);
-}
+// ฟังก์ชันสำหรับตอบข้อความกลับไปยัง LINE
+const replyMessageToUser = (replyToken, message) => {
+  const headers = {
+    'Content-Type': 'application/json',
+    'Authorization': `Bearer ${process.env.LINE_CHANNEL_ACCESS_TOKEN}`,
+  };
 
-// Start server
-const port = process.env.PORT || 3000;
+  const body = {
+    replyToken: replyToken,
+    messages: [message],
+  };
+
+  return axios.post('https://api.line.me/v2/bot/message/reply', body, { headers });
+};
+
+// เริ่มเซิร์ฟเวอร์
 app.listen(port, () => {
   console.log(`Server running on port ${port}`);
 });
