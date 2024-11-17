@@ -27,6 +27,7 @@ app.post('/send-message', (req, res) => {
     ],
   };
 
+  // ส่งข้อความไปยัง LINE
   axios
     .post('https://api.line.me/v2/bot/message/push', body, { headers })
     .then(() => {
@@ -69,6 +70,30 @@ app.post('/webhook', (req, res) => {
     .catch((err) => {
       console.error(err);
       res.status(500).end();
+    });
+});
+
+// Endpoint สำหรับบันทึกข้อมูลลง Google Sheet
+app.post('/save-data', (req, res) => {
+  const { userId, sugarLevel, bloodPressure, bmi } = req.body;
+
+  const appsScriptUrl = process.env.APPS_SCRIPT_URL; // URL ของ Apps Script Web App
+  const data = {
+    userId,
+    sugarLevel,
+    bloodPressure,
+    bmi,
+  };
+
+  axios
+    .post(appsScriptUrl, data)
+    .then(() => {
+      console.log('Data saved to Google Sheet successfully!');
+      res.status(200).send('Data saved successfully!');
+    })
+    .catch((err) => {
+      console.error('Error saving data:', err.response?.data || err.message);
+      res.status(500).send('Error saving data');
     });
 });
 
