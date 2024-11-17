@@ -1,93 +1,97 @@
-const express = require('express');
-const bodyParser = require('body-parser');
-const axios = require('axios');
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Health Form</title>
+  <script type="module">
+    // Import Firebase SDK
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.0.0/firebase-app.js";
+    import { getDatabase, ref, set } from "https://www.gstatic.com/firebasejs/9.0.0/firebase-database.js";
 
-const app = express();
-const port = process.env.PORT || 3000;
+    // Firebase Configuration
+    const firebaseConfig = {
+      apiKey: "AIzaSyB9mAZkFBPqOGyFdxRcjk-UE1VV_eWDIhc",
+      authDomain: "line-bot-health-check.firebaseapp.com",
+      databaseURL: "https://line-bot-health-check-default-rtdb.asia-southeast1.firebasedatabase.app",
+      projectId: "line-bot-health-check",
+      storageBucket: "line-bot-health-check.firebasestorage.app",
+      messagingSenderId: "1000214939530",
+      appId: "1:1000214939530:web:e4bf9fe402ead4feb76a73",
+      measurementId: "G-DDDMVGZD6F"
+    };
 
-// Middleware
-app.use(bodyParser.json());
-app.use(bodyParser.urlencoded({ extended: true }));
-app.use(express.static('public')); // เสิร์ฟไฟล์ static เช่น form.html
+    // Initialize Firebase
+    const app = initializeApp(firebaseConfig);
+    const database = getDatabase(app);
 
-// API Endpoint สำหรับส่งข้อความและสติกเกอร์ไปยังผู้ใช้
-app.post('/send-message', (req, res) => {
-  const { userId, message, packageId, stickerId } = req.body;
+    function submitForm() {
+      const userId = new URLSearchParams(window.location.search).get('userId');
+      const sugarLevel = document.getElementById('sugarLevel').value;
+      const bloodPressure = document.getElementById('bloodPressure').value;
+      const height = document.getElementById('height').value;
+      const weight = document.getElementById('weight').value;
 
-  const headers = {
-    'Content-Type': 'application/json',
-    'Authorization': `Bearer ${process.env.LINE_CHANNEL_ACCESS_TOKEN}`, // ใช้ Access Token จาก Config Vars
-  };
+      // Calculate BMI
+      const bmi = (weight / ((height / 100) ** 2)).toFixed(2);
 
-  const body = {
-    to: userId,
-    messages: [
-      { type: 'text', text: message },
-      { type: 'sticker', packageId, stickerId },
-    ],
-  };
+      // Prepare health result
+      const healthResult = {
+        sugarLevel,
+        bloodPressure,
+        bmi,
+        status: getStatus(bmi)
+      };
 
-  axios
-    .post('https://api.line.me/v2/bot/message/push', body, { headers })
-    .then(() => {
-      console.log('Message sent successfully!');
-      res.status(200).send('Message sent successfully!');
-    })
-    .catch((err) => {
-      console.error('Error sending message:', err.response?.data || err.message);
-      res.status(500).send('Error sending message');
-    });
-});
-
-// เสิร์ฟหน้าเว็บฟอร์ม
-app.get('/form', (req, res) => {
-  res.sendFile(__dirname + '/form.html');
-});
-
-// Webhook สำหรับตอบข้อความจากผู้ใช้
-app.post('/webhook', (req, res) => {
-  const events = req.body.events;
-  const replyPromises = events.map((event) => {
-    if (event.type === 'message' && event.message.type === 'text') {
-      const userMessage = event.message.text;
-
-      if (userMessage === 'คำนวนผลสุขภาพ') {
-        const formUrl = `https://${req.headers.host}/form?userId=${event.source.userId}`;
-        const replyMessage = {
-          type: 'text',
-          text: `กรุณากรอกข้อมูลสุขภาพของคุณได้ที่ลิงก์นี้: ${formUrl}`,
-        };
-
-        return replyMessageToUser(event.replyToken, replyMessage);
-      }
+      // Save data to Firebase
+      set(ref(database, 'users/' + userId), healthResult)
+        .then(() => {
+          alert('ข้อมูลถูกบันทึกเรียบร้อยแล้ว');
+          sendLineMessage(userId, healthResult);
+        })
+        .catch((error) => {
+          alert('เกิดข้อผิดพลาดในการส่งข้อมูล');
+          console.error('Error:', error);
+        });
     }
-    return Promise.resolve(null);
-  });
 
-  Promise.all(replyPromises)
-    .then(() => res.status(200).end())
-    .catch((err) => {
-      console.error(err);
-      res.status(500).end();
-    });
-});
+    function getStatus(bmi) {
+      if (bmi < 18.5) return 'น้ำหนักน้อย';
+      if (bmi >= 18.5 && bmi < 24.9) return 'น้ำหนักปกติ';
+      if (bmi >= 25 && bmi < 29.9) return 'น้ำหนักเกิน';
+      return 'อ้วน';
+    }
 
-// ฟังก์ชันสำหรับตอบข้อความกลับไปยัง LINE
-const replyMessageToUser = (replyToken, message) => {
-  const headers = {
-    'Content-Type': 'application/json',
-    'Authorization': `Bearer ${process.env.LINE_CHANNEL_ACCESS_TOKEN}`,
-  };
-
-  const body = {
-    replyToken: replyToken,
-    messages: [message],
-  };
-
-  return axios.post('https://api.line.me/v2/bot/message/reply', body, { headers });
-};
-
-// เริ่มเซิร์ฟเวอร์
-app.listen(port, () => {
-  console.log(`Server running on port ${port}`);
-});
+    function sendLineMessage(userId, result) {
+      fetch('/send-line-message', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          userId,
+          message: `ผลลัพธ์สุขภาพของคุณ:\n- ค่าน้ำตาล: ${result.sugarLevel}\n- ค่าความดัน: ${result.bloodPressure}\n- BMI: ${result.bmi} (${result.status})`
+        })
+      }).then(response => {
+        if (response.ok) {
+          console.log('Message sent successfully.');
+        } else {
+          console.error('Failed to send message.');
+        }
+      });
+    }
+  </script>
+</head>
+<body>
+  <h1>กรอกข้อมูลสุขภาพ</h1>
+  <label for="sugarLevel">ค่าน้ำตาล:</label>
+  <input type="number" id="sugarLevel" required><br>
+  <label for="bloodPressure">ค่าความดัน:</label>
+  <input type="number" id="bloodPressure" required><br>
+  <label for="height">ส่วนสูง (cm):</label>
+  <input type="number" id="height" required><br>
+  <label for="weight">น้ำหนัก (kg):</label>
+  <input type="number" id="weight" required><br>
+  <button onclick="submitForm()">ส่งข้อมูล</button>
+</body>
+</html>
