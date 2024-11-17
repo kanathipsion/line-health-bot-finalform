@@ -30,7 +30,7 @@
     else if (healthResult === 'อ้วน') stickerId = '112';
 
     // ส่งข้อมูลไปยัง Google Apps Script
-    fetch('YOUR_GOOGLE_SCRIPT_URL', {
+    fetch('https://script.google.com/macros/s/AKfycbxGAc9Q3TKBacVWEukWBJsVQsTtgAkAWZ6EHTr-FLuJOuGhucgL9ytKgUazOTQr7-A_cQ/exec', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
