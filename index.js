@@ -10,9 +10,6 @@ app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(express.static('public')); // เสิร์ฟไฟล์ static เช่น form.html
 
-// ดึงค่า Apps Script URL จาก Config Vars
-const scriptUrl = process.env.APPS_SCRIPT_URL;
-
 // API Endpoint สำหรับส่งข้อความและสติกเกอร์ไปยังผู้ใช้
 app.post('/send-message', (req, res) => {
   const { userId, message, packageId, stickerId } = req.body;
@@ -48,7 +45,7 @@ app.post('/save-to-sheet', (req, res) => {
 
   // ส่งข้อมูลไปยัง Apps Script
   axios
-    .post(scriptUrl, data)
+    .post(process.env.APPS_SCRIPT_URL, data)
     .then((response) => {
       console.log('Data saved successfully:', response.data);
       res.status(200).send('Data saved successfully!');
