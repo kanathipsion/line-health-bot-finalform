@@ -1,6 +1,7 @@
 const express = require('express');
 const bodyParser = require('body-parser');
 const axios = require('axios');
+const { google } = require('googleapis');
 
 const app = express();
 const port = process.env.PORT || 3000;
@@ -10,33 +11,63 @@ app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(express.static('public')); // เสิร์ฟไฟล์ static เช่น form.html
 
+// Google Sheets API Setup
+const base64Credentials = process.env.GOOGLE_CREDENTIALS_BASE64;
+const decodedCredentials = Buffer.from(base64Credentials, 'base64').toString('utf-8');
+const credentials = JSON.parse(decodedCredentials);
+
+const authClient = new google.auth.JWT(
+  credentials.client_email,
+  null,
+  credentials.private_key,
+  ['https://www.googleapis.com/auth/spreadsheets']
+);
+
+const sheets = google.sheets({ version: 'v4', auth: authClient });
+
 // API Endpoint สำหรับส่งข้อความและสติกเกอร์ไปยังผู้ใช้
-app.post('/send-message', (req, res) => {
-  const { userId, message, packageId, stickerId } = req.body;
+app.post('/send-message', async (req, res) => {
+  const { userId, message, packageId, stickerId, height, weight } = req.body;
 
-  const headers = {
-    'Content-Type': 'application/json',
-    'Authorization': `Bearer ${process.env.LINE_CHANNEL_ACCESS_TOKEN}`, // ใช้ Access Token จาก Config Vars
-  };
+  try {
+    // คำนวณ BMI
+    const bmi = (weight / Math.pow(height / 100, 2)).toFixed(2);
 
-  const body = {
-    to: userId,
-    messages: [
-      { type: 'text', text: message },
-      { type: 'sticker', packageId, stickerId },
-    ],
-  };
+    // สร้างข้อความผลลัพธ์สุขภาพ
+    const healthMessage = `${message}\n\nผลลัพธ์สุขภาพของคุณ:\n- BMI: ${bmi}`;
 
-  axios
-    .post('https://api.line.me/v2/bot/message/push', body, { headers })
-    .then(() => {
-      console.log('Message sent successfully!');
-      res.status(200).send('Message sent successfully!');
-    })
-    .catch((err) => {
-      console.error('Error sending message:', err.response?.data || err.message);
-      res.status(500).send('Error sending message');
+    const headers = {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${process.env.LINE_CHANNEL_ACCESS_TOKEN}`,
+    };
+
+    const body = {
+      to: userId,
+      messages: [
+        { type: 'text', text: healthMessage },
+        { type: 'sticker', packageId, stickerId },
+      ],
+    };
+
+    // ส่งข้อความและสติกเกอร์กลับไปยัง LINE
+    await axios.post('https://api.line.me/v2/bot/message/push', body, { headers });
+
+    // บันทึกข้อมูลลงใน Google Sheets
+    await sheets.spreadsheets.values.append({
+      spreadsheetId: process.env.SPREADSHEET_ID,
+      range: 'Sheet1!A1',
+      valueInputOption: 'RAW',
+      requestBody: {
+        values: [[userId, height, weight, bmi, new Date().toISOString()]],
+      },
     });
+
+    console.log('Message sent and data saved successfully!');
+    res.status(200).send('Message sent and data saved successfully!');
+  } catch (err) {
+    console.error('Error sending message or saving data:', err.response?.data || err.message);
+    res.status(500).send('Error sending message or saving data');
+  }
 });
 
 // เสิร์ฟหน้าเว็บฟอร์ม
