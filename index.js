@@ -1,66 +1,47 @@
-const { google } = require('googleapis');
 const express = require('express');
-const bodyParser = require('body-parser');
+const { Client, middleware } = require('@line/bot-sdk');
+const path = require('path'); // เพิ่มการ require โมดูล path
 
 const app = express();
-app.use(bodyParser.urlencoded({ extended: true }));
-app.use(bodyParser.json());
 
-// โหลด Google Credentials จาก Environment Variable
-const credentials = JSON.parse(process.env.GOOGLE_CREDENTIALS);
+const config = {
+  channelAccessToken: process.env.LINE_CHANNEL_ACCESS_TOKEN,
+  channelSecret: process.env.LINE_CHANNEL_SECRET,
+};
 
-const client = new google.auth.JWT(
-  credentials.client_email,
-  null,
-  credentials.private_key,
-  ['https://www.googleapis.com/auth/spreadsheets']
-);
+const client = new Client(config);
 
-const sheets = google.sheets({ version: 'v4', auth: client });
+app.use(middleware(config));
+app.use(express.json());
 
-// ID ของ Google Sheet
-const SPREADSHEET_ID = '1myXIPPbUzh340BqAmjyylFgBs9Dyuu1FOy8QDXO9DxE';
-
-// เสิร์ฟหน้าเว็บฟอร์ม
+// เสิร์ฟหน้า form
 app.get('/form', (req, res) => {
-  res.sendFile(path.join(__dirname, 'form.html')); // ส่งหน้าเว็บฟอร์ม
+  res.sendFile(path.join(__dirname, 'form.html')); // เส้นทางไปยัง form.html
 });
 
-// Webhook สำหรับ LINE Bot
+// Webhook สำหรับ LINE
 app.post('/webhook', (req, res) => {
-  const userMessage = req.body.events[0].message.text;
+  Promise.all(req.body.events.map(handleEvent))
+    .then((result) => res.json(result))
+    .catch((err) => {
+      console.error(err);
+      res.status(500).end();
+    });
+});
 
-  if (userMessage === 'คำนวนผลสุขภาพ') {
-    const formUrl = `https://line-bot-health-check-477c415b127f.herokuapp.com/form?userId=${req.body.events[0].source.userId}`;
-    return res.json({
+// ฟังก์ชันสำหรับจัดการข้อความจากผู้ใช้
+function handleEvent(event) {
+  if (event.type === 'message' && event.message.type === 'text') {
+    const replyMessage = {
       type: 'text',
-      text: `กรุณากรอกข้อมูลสุขภาพของคุณที่ลิงก์นี้: ${formUrl}`,
-    });
+      text: 'กรุณากรอกข้อมูลสุขภาพของคุณในลิงก์นี้: https://line-bot-health-check-477c415b127f.herokuapp.com/form?userId=' + event.source.userId,
+    };
+
+    return client.replyMessage(event.replyToken, replyMessage);
   }
-});
+  return Promise.resolve(null);
+}
 
-// บันทึกข้อมูลจากฟอร์มไปยัง Google Sheets
-app.post('/submit-form', async (req, res) => {
-  const { userId, sugar, pressure, bmi } = req.body;
-
-  const values = [[userId, sugar, pressure, bmi, new Date().toLocaleString()]];
-
-  try {
-    await sheets.spreadsheets.values.append({
-      spreadsheetId: SPREADSHEET_ID,
-      range: 'Sheet1!A:E',
-      valueInputOption: 'RAW',
-      resource: { values },
-    });
-
-    res.status(200).send('บันทึกข้อมูลเรียบร้อยแล้ว!');
-  } catch (error) {
-    console.error('Error saving to Google Sheets:', error);
-    res.status(500).send('เกิดข้อผิดพลาดในการบันทึกข้อมูล');
-  }
-});
-
-// เริ่มเซิร์ฟเวอร์
 const port = process.env.PORT || 3000;
 app.listen(port, () => {
   console.log(`Server is running on port ${port}`);
