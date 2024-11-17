@@ -1,8 +1,6 @@
 const express = require('express');
 const bodyParser = require('body-parser');
 const axios = require('axios');
-const crypto = require('crypto');
-require('dotenv').config(); // โหลดค่าจาก Config Vars หรือ .env
 
 const app = express();
 const port = process.env.PORT || 3000;
@@ -14,17 +12,6 @@ app.use(express.static('public')); // เสิร์ฟไฟล์ static เ�
 
 // ดึงค่า Apps Script URL จาก Config Vars
 const scriptUrl = process.env.APPS_SCRIPT_URL;
-
-// ฟังก์ชันตรวจสอบ Signature สำหรับ Webhook
-const validateSignature = (req) => {
-  const signature = req.headers['x-line-signature'];
-  const body = JSON.stringify(req.body);
-  const hash = crypto
-    .createHmac('SHA256', process.env.LINE_CHANNEL_SECRET)
-    .update(body)
-    .digest('base64');
-  return hash === signature;
-};
 
 // API Endpoint สำหรับส่งข้อความและสติกเกอร์ไปยังผู้ใช้
 app.post('/send-message', (req, res) => {
@@ -59,11 +46,6 @@ app.post('/send-message', (req, res) => {
 app.post('/save-to-sheet', (req, res) => {
   const data = req.body;
 
-  // ตรวจสอบว่าข้อมูลครบถ้วนก่อนส่ง
-  if (!data.userId || !data.sugarLevel || !data.bloodPressure || !data.bmi) {
-    return res.status(400).send('Invalid data');
-  }
-
   // ส่งข้อมูลไปยัง Apps Script
   axios
     .post(scriptUrl, data)
@@ -84,10 +66,6 @@ app.get('/form', (req, res) => {
 
 // Webhook สำหรับตอบข้อความจากผู้ใช้
 app.post('/webhook', (req, res) => {
-  if (!validateSignature(req)) {
-    return res.status(403).send('Invalid Signature');
-  }
-
   const events = req.body.events;
   const replyPromises = events.map((event) => {
     if (event.type === 'message' && event.message.type === 'text') {
