@@ -87,54 +87,6 @@ const replyMessageToUser = (replyToken, message) => {
   return axios.post('https://api.line.me/v2/bot/message/reply', body, { headers });
 };
 
-// ฟังก์ชันสำหรับส่งข้อความและสติกเกอร์จากฟอร์ม
-app.post('/submit', (req, res) => {
-  const { userId, sugar, pressure, height, weight } = req.body;
-
-  // คำนวณ BMI
-  const bmi = (weight / ((height / 100) ** 2)).toFixed(2);
-  let healthStatus = '';
-
-  // ตรวจสอบสถานะสุขภาพ
-  if (bmi < 18.5) {
-    healthStatus = 'น้ำหนักน้อย';
-  } else if (bmi >= 18.5 && bmi < 24.9) {
-    healthStatus = 'สุขภาพดี';
-  } else if (bmi >= 25 && bmi < 29.9) {
-    healthStatus = 'น้ำหนักเกิน';
-  } else {
-    healthStatus = 'อ้วน';
-  }
-
-  const message = `ผลลัพธ์สุขภาพของคุณ:\n- ค่าน้ำตาล: ${sugar}\n- ค่าความดัน: ${pressure}\n- BMI: ${bmi} (${healthStatus})`;
-  const packageId = '1';
-  const stickerId = bmi >= 30 ? '8' : '4'; // Sticker ตามสถานะสุขภาพ
-
-  const headers = {
-    'Content-Type': 'application/json',
-    'Authorization': `Bearer ${process.env.LINE_CHANNEL_ACCESS_TOKEN}`,
-  };
-
-  const body = {
-    to: userId,
-    messages: [
-      { type: 'text', text: message },
-      { type: 'sticker', packageId, stickerId },
-    ],
-  };
-
-  axios
-    .post('https://api.line.me/v2/bot/message/push', body, { headers })
-    .then(() => {
-      console.log('Health summary sent successfully!');
-      res.status(200).send('Health summary sent successfully!');
-    })
-    .catch((err) => {
-      console.error('Error sending health summary:', err.response?.data || err.message);
-      res.status(500).send('Error sending health summary');
-    });
-});
-
 // เริ่มเซิร์ฟเวอร์
 app.listen(port, () => {
   console.log(`Server running on port ${port}`);
