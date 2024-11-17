@@ -1,6 +1,6 @@
 const express = require('express');
 const { Client, middleware } = require('@line/bot-sdk');
-const path = require('path'); // เพิ่มการ require โมดูล path
+const path = require('path'); // เพิ่ม path module
 
 const app = express();
 
@@ -11,22 +11,19 @@ const config = {
 
 const client = new Client(config);
 
-app.use(middleware(config));
-app.use(express.json());
-
-// เสิร์ฟหน้า form
-app.get('/form', (req, res) => {
-  res.sendFile(path.join(__dirname, 'form.html')); // เส้นทางไปยัง form.html
-});
-
-// Webhook สำหรับ LINE
-app.post('/webhook', (req, res) => {
+// ใช้ middleware ของ LINE เฉพาะที่จำเป็น
+app.post('/webhook', middleware(config), (req, res) => {
   Promise.all(req.body.events.map(handleEvent))
     .then((result) => res.json(result))
     .catch((err) => {
       console.error(err);
       res.status(500).end();
     });
+});
+
+// เสิร์ฟหน้า form
+app.get('/form', (req, res) => {
+  res.sendFile(path.join(__dirname, 'form.html')); // ส่งไฟล์ form.html
 });
 
 // ฟังก์ชันสำหรับจัดการข้อความจากผู้ใช้
@@ -42,6 +39,7 @@ function handleEvent(event) {
   return Promise.resolve(null);
 }
 
+// Start Server
 const port = process.env.PORT || 3000;
 app.listen(port, () => {
   console.log(`Server is running on port ${port}`);
