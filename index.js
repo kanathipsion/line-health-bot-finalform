@@ -1,93 +1,86 @@
-const express = require('express');
-const bodyParser = require('body-parser');
-const axios = require('axios');
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Health Form</title>
+</head>
+<body>
+  <h1>กรอกข้อมูลสุขภาพของคุณ</h1>
+  <form id="healthForm">
+    <label for="sugar">ค่าน้ำตาล (mg/dL):</label><br>
+    <input type="number" id="sugar" name="sugar" required><br><br>
 
-const app = express();
-const port = process.env.PORT || 3000;
+    <label for="pressure">ค่าความดัน (mmHg):</label><br>
+    <input type="number" id="pressure" name="pressure" required><br><br>
 
-// Middleware
-app.use(bodyParser.json());
-app.use(bodyParser.urlencoded({ extended: true }));
-app.use(express.static('public')); // เสิร์ฟไฟล์ static เช่น form.html
+    <label for="height">ส่วนสูง (cm):</label><br>
+    <input type="number" id="height" name="height" required><br><br>
 
-// API Endpoint สำหรับส่งข้อความและสติกเกอร์ไปยังผู้ใช้
-app.post('/send-message', (req, res) => {
-  const { userId, message, packageId, stickerId } = req.body;
+    <label for="weight">น้ำหนัก (kg):</label><br>
+    <input type="number" id="weight" name="weight" required><br><br>
 
-  const headers = {
-    'Content-Type': 'application/json',
-    'Authorization': `Bearer ${process.env.LINE_CHANNEL_ACCESS_TOKEN}`, // ใช้ Access Token จาก Config Vars
-  };
+    <input type="hidden" id="userId" value="">
+    <button type="submit">ส่งข้อมูล</button>
+  </form>
 
-  const body = {
-    to: userId,
-    messages: [
-      { type: 'text', text: message },
-      { type: 'sticker', packageId, stickerId },
-    ],
-  };
+  <script>
+    // ดึงค่า userId จาก URL
+    const urlParams = new URLSearchParams(window.location.search);
+    const userId = urlParams.get('userId');
+    document.getElementById('userId').value = userId;
 
-  axios
-    .post('https://api.line.me/v2/bot/message/push', body, { headers })
-    .then(() => {
-      console.log('Message sent successfully!');
-      res.status(200).send('Message sent successfully!');
-    })
-    .catch((err) => {
-      console.error('Error sending message:', err.response?.data || err.message);
-      res.status(500).send('Error sending message');
-    });
-});
+    // ส่งข้อมูลไปยังเซิร์ฟเวอร์
+    document.getElementById('healthForm').addEventListener('submit', (event) => {
+      event.preventDefault();
 
-// เสิร์ฟหน้าเว็บฟอร์ม
-app.get('/form', (req, res) => {
-  res.sendFile(__dirname + '/form.html');
-});
+      const sugar = document.getElementById('sugar').value;
+      const pressure = document.getElementById('pressure').value;
+      const height = document.getElementById('height').value;
+      const weight = document.getElementById('weight').value;
 
-// Webhook สำหรับตอบข้อความจากผู้ใช้
-app.post('/webhook', (req, res) => {
-  const events = req.body.events;
-  const replyPromises = events.map((event) => {
-    if (event.type === 'message' && event.message.type === 'text') {
-      const userMessage = event.message.text;
+      const bmi = (weight / Math.pow(height / 100, 2)).toFixed(2);
+      let healthMessage = `ผลลัพธ์สุขภาพของคุณ:\n- ค่าน้ำตาล: ${sugar}\n- ค่าความดัน: ${pressure}\n- BMI: ${bmi}`;
 
-      if (userMessage === 'คำนวนผลสุขภาพ') {
-        const formUrl = `https://${req.headers.host}/form?userId=${event.source.userId}`;
-        const replyMessage = {
-          type: 'text',
-          text: `กรุณากรอกข้อมูลสุขภาพของคุณได้ที่ลิงก์นี้: ${formUrl}`,
-        };
+      let packageId = '1'; // ตัวอย่าง Package ID
+      let stickerId = '13'; // ตัวอย่าง Sticker ID
 
-        return replyMessageToUser(event.replyToken, replyMessage);
+      if (bmi < 18.5) {
+        healthMessage += ' (น้ำหนักน้อย)';
+      } else if (bmi < 25) {
+        healthMessage += ' (ปกติ)';
+        stickerId = '110'; // ตัวอย่างสติกเกอร์สีเขียว
+      } else if (bmi < 30) {
+        healthMessage += ' (น้ำหนักเกิน)';
+        stickerId = '111'; // ตัวอย่างสติกเกอร์สีเหลือง
+      } else {
+        healthMessage += ' (อ้วน)';
+        stickerId = '112'; // ตัวอย่างสติกเกอร์สีแดง
       }
-    }
-    return Promise.resolve(null);
-  });
 
-  Promise.all(replyPromises)
-    .then(() => res.status(200).end())
-    .catch((err) => {
-      console.error(err);
-      res.status(500).end();
+      fetch('/send-message', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          userId: userId,
+          message: healthMessage,
+          packageId: packageId,
+          stickerId: stickerId,
+        }),
+      })
+        .then((response) => {
+          if (!response.ok) {
+            throw new Error('Failed to send message');
+          }
+          alert('ส่งข้อมูลสำเร็จ! กรุณาตรวจสอบ LINE ของคุณ');
+        })
+        .catch((error) => {
+          console.error('Error:', error);
+          alert('เกิดข้อผิดพลาด: ' + error.message);
+        });
     });
-});
-
-// ฟังก์ชันสำหรับตอบข้อความกลับไปยัง LINE
-const replyMessageToUser = (replyToken, message) => {
-  const headers = {
-    'Content-Type': 'application/json',
-    'Authorization': `Bearer ${process.env.LINE_CHANNEL_ACCESS_TOKEN}`,
-  };
-
-  const body = {
-    replyToken: replyToken,
-    messages: [message],
-  };
-
-  return axios.post('https://api.line.me/v2/bot/message/reply', body, { headers });
-};
-
-// เริ่มเซิร์ฟเวอร์
-app.listen(port, () => {
-  console.log(`Server running on port ${port}`);
-});
+  </script>
+</body>
+</html>
