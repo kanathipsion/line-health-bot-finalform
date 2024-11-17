@@ -1,42 +1,37 @@
 const express = require('express');
-const { Client, middleware } = require('@line/bot-sdk');
 const axios = require('axios');
-const path = require('path');
-require('dotenv').config(); // โหลด environment variables จากไฟล์ .env
+const { Client, middleware } = require('@line/bot-sdk');
+require('dotenv').config();
 
 const app = express();
 app.use(express.json());
 
-// LINE Bot configurations
 const config = {
   channelAccessToken: process.env.LINE_CHANNEL_ACCESS_TOKEN,
   channelSecret: process.env.LINE_CHANNEL_SECRET,
 };
+
 const client = new Client(config);
 
 // Middleware สำหรับ LINE webhook
-app.use('/webhook', middleware(config));
+app.use(middleware(config));
 
-// เสิร์ฟหน้าเว็บฟอร์ม
-app.get('/form', (req, res) => {
-  res.sendFile(path.join(__dirname, 'form.html'));
-});
-
-// Webhook สำหรับรับข้อความจากผู้ใช้
+// Route สำหรับ Webhook รับข้อความจากผู้ใช้
 app.post('/webhook', (req, res) => {
   Promise.all(req.body.events.map(handleEvent))
-    .then((result) => res.json(result))
-    .catch((err) => {
+    .then(result => res.json(result))
+    .catch(err => {
       console.error(err);
       res.status(500).end();
     });
 });
 
-// ฟังก์ชันเพื่อจัดการข้อความจากผู้ใช้
+// ฟังก์ชันสำหรับจัดการข้อความจากผู้ใช้
 function handleEvent(event) {
   if (event.type === 'message' && event.message.type === 'text') {
     const userMessage = event.message.text;
 
+    // ตรวจสอบว่าข้อความที่ผู้ใช้พิมพ์คือ "คำนวนผลสุขภาพ"
     if (userMessage === 'คำนวนผลสุขภาพ') {
       const formUrl = `https://line-bot-health-check-477c415b127f.herokuapp.com/form?userId=${event.source.userId}`;
       const replyMessage = {
@@ -47,20 +42,9 @@ function handleEvent(event) {
       return client.replyMessage(event.replyToken, replyMessage);
     }
   }
+
+  // ไม่ตอบกลับสำหรับข้อความอื่น ๆ
   return Promise.resolve(null);
-}
-
-// ฟังก์ชันส่งข้อมูลไปยัง Google Sheets
-function sendDataToGoogleSheet(data) {
-  const googleScriptUrl = process.env.GOOGLE_SCRIPT_URL;
-
-  axios.post(googleScriptUrl, data)
-    .then(response => {
-      console.log('Data sent to Google Sheets:', response.data);
-    })
-    .catch(error => {
-      console.error('Error sending data to Google Sheets:', error.message);
-    });
 }
 
 // Start server
