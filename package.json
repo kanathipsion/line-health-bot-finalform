@@ -10,6 +10,6 @@
     "@line/bot-sdk": "^7.4.0",
     "axios": "^0.21.1",
     "express": "^4.17.1",
-    "firebase": "^9.6.1" // เพิ่ม Firebase SDK
+    "firebase-admin": "^11.0.0" // เพิ่ม firebase-admin
   }
 }
