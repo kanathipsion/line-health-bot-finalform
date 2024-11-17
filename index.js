@@ -2,25 +2,6 @@ const express = require('express');
 const { Client, middleware } = require('@line/bot-sdk');
 const path = require('path');
 
-const { initializeApp } = require('firebase/app');
-const { getDatabase, ref, set } = require('firebase/database');
-
-// Firebase Configuration
-const firebaseConfig = {
-  apiKey: "AIzaSyB9mAZkFBPqOGyFdxRcjk-UE1VV_eWDIhc",
-  authDomain: "line-bot-health-check.firebaseapp.com",
-  databaseURL: "https://line-bot-health-check-default-rtdb.asia-southeast1.firebasedatabase.app",
-  projectId: "line-bot-health-check",
-  storageBucket: "line-bot-health-check.firebasestorage.app",
-  messagingSenderId: "1000214939530",
-  appId: "1:1000214939530:web:e4bf9fe402ead4feb76a73",
-  measurementId: "G-DDDMVGZD6F"
-};
-
-// Initialize Firebase
-const firebaseApp = initializeApp(firebaseConfig);
-const database = getDatabase(firebaseApp);
-
 const app = express();
 
 // LINE Bot configurations
