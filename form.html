@@ -58,7 +58,7 @@
         stickerId = '112'; // ตัวอย่างสติกเกอร์สีแดง
       }
 
-      // บันทึกข้อมูลลง Google Sheet
+      // บันทึกข้อมูลลง Google Sheets
       fetch('/save-to-sheet', {
         method: 'POST',
         headers: {
@@ -69,6 +69,8 @@
           sugarLevel: sugar,
           bloodPressure: pressure,
           bmi: bmi,
+          height: height,
+          weight: weight,
         }),
       })
         .then((response) => {
