@@ -66,10 +66,10 @@
       <label for="sugar">ค่าน้ำตาล (mg/dL):</label>
       <input type="number" id="sugar" name="sugar" required>
 
-      <label for="systolic">ความดันบน (Systolic) (mmHg):</label>
+      <label for="systolic">ความดันบน (mmHg):</label>
       <input type="number" id="systolic" name="systolic" required>
 
-      <label for="diastolic">ความดันล่าง (Diastolic) (mmHg):</label>
+      <label for="diastolic">ความดันล่าง (mmHg):</label>
       <input type="number" id="diastolic" name="diastolic" required>
 
       <label for="height">ส่วนสูง (cm):</label>
@@ -100,72 +100,4 @@
       const weight = document.getElementById('weight').value;
 
       const bmi = (weight / Math.pow(height / 100, 2)).toFixed(2);
-      let healthMessage = `ผลลัพธ์สุขภาพของคุณ:\n- ค่าน้ำตาล: ${sugar}\n- ความดันบน: ${systolic}\n- ความดันล่าง: ${diastolic}\n- BMI: ${bmi}`;
-
-      let packageId = '1'; // ตัวอย่าง Package ID
-      let stickerId = '13'; // ตัวอย่าง Sticker ID
-
-      if (bmi < 18.5) {
-        healthMessage += ' (น้ำหนักน้อย)';
-      } else if (bmi < 25) {
-        healthMessage += ' (ปกติ)';
-        stickerId = '110'; // ตัวอย่างสติกเกอร์สีเขียว
-      } else if (bmi < 30) {
-        healthMessage += ' (น้ำหนักเกิน)';
-        stickerId = '111'; // ตัวอย่างสติกเกอร์สีเหลือง
-      } else {
-        healthMessage += ' (อ้วน)';
-        stickerId = '112'; // ตัวอย่างสติกเกอร์สีแดง
-      }
-
-      // บันทึกข้อมูลลง Google Sheet
-      fetch('/save-to-sheet', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          userId: userId,
-          sugarLevel: sugar,
-          systolic: systolic,
-          diastolic: diastolic,
-          bmi: bmi,
-        }),
-      })
-        .then((response) => {
-          if (!response.ok) {
-            throw new Error('Failed to save data');
-          }
-          console.log('Data saved successfully!');
-        })
-        .catch((error) => {
-          console.error('Error saving data:', error);
-        });
-
-      // ส่งข้อความและรูปภาพไปยัง LINE
-      fetch('/send-message', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          userId: userId,
-          message: healthMessage,
-          packageId: packageId,
-          stickerId: stickerId,
-        }),
-      })
-        .then((response) => {
-          if (!response.ok) {
-            throw new Error('Failed to send message');
-          }
-          alert('ส่งข้อมูลสำเร็จ! กรุณาตรวจสอบ LINE ของคุณ');
-        })
-        .catch((error) => {
-          console.error('Error sending message:', error);
-          alert('เกิดข้อผิดพลาด: ' + error.message);
-        });
-    });
-  </script>
-</body>
-</html>
+      let healthMessage = `ผลลัพธ์สุขภาพของคุณ:\n- ค่าน้ำตาล: ${sugar}\n- ความดันบน: ${systolic}\n- ความดันล่าง: ${diastolic}\n- BMI: ${
