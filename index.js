@@ -19,18 +19,14 @@ app.post('/send-message', (req, res) => {
     'Authorization': `Bearer ${process.env.LINE_CHANNEL_ACCESS_TOKEN}`, // ใช้ Access Token จาก Config Vars
   };
 
-  let messages = [
+  const messages = [
     { type: 'text', text: message },
-  ];
-
-  // ตรวจสอบและส่ง URL รูปภาพหากมีการระบุ
-  if (imageUrl) {
-    messages.push({
+    {
       type: 'image',
       originalContentUrl: imageUrl,
-      previewImageUrl: imageUrl
-    });
-  }
+      previewImageUrl: imageUrl,
+    },
+  ];
 
   const body = {
     to: userId,
