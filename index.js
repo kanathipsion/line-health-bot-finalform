@@ -10,7 +10,7 @@ app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(express.static('public')); // เสิร์ฟไฟล์ static เช่น form.html
 
-// API Endpoint สำหรับส่งข้อความและสติกเกอร์ไปยังผู้ใช้
+// API Endpoint สำหรับส่งข้อความและสติกเกอร์/รูปภาพไปยังผู้ใช้
 app.post('/send-message', (req, res) => {
   const { userId, message, packageId, stickerId } = req.body;
 
@@ -19,12 +19,24 @@ app.post('/send-message', (req, res) => {
     'Authorization': `Bearer ${process.env.LINE_CHANNEL_ACCESS_TOKEN}`, // ใช้ Access Token จาก Config Vars
   };
 
+  let messages = [
+    { type: 'text', text: message },
+  ];
+
+  // แทนที่สติกเกอร์สีเขียวด้วยรูปภาพจาก Google Drive
+  if (stickerId === '110') { // ตรวจสอบว่าเป็นสติกเกอร์สีเขียว
+    messages.push({
+      type: 'image',
+      originalContentUrl: 'https://drive.google.com/uc?id=1neLxgykGoVpyPMWaofsqgtmauVHRvj5s',
+      previewImageUrl: 'https://drive.google.com/uc?id=1neLxgykGoVpyPMWaofsqgtmauVHRvj5s'
+    });
+  } else {
+    messages.push({ type: 'sticker', packageId, stickerId });
+  }
+
   const body = {
     to: userId,
-    messages: [
-      { type: 'text', text: message },
-      { type: 'sticker', packageId, stickerId },
-    ],
+    messages: messages,
   };
 
   axios
