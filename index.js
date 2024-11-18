@@ -27,20 +27,20 @@ app.post('/send-message', (req, res) => {
   if (fbs >= 126 || bpSystolic >= 140 || bpDiastolic >= 90) {
     messages.push({
       type: 'image',
-      originalContentUrl: 'https://drive.google.com/uc?id=1Z9YF0VVLF8EVnKHDu9LxVnmAojAVZrd-', // ภาพสำหรับเกณฑ์สูง (สีแดง)
-      previewImageUrl: 'https://drive.google.com/uc?id=1Z9YF0VVLF8EVnKHDu9LxVnmAojAVZrd-'
+      originalContentUrl: 'https://drive.google.com/uc?id=1Fq1SmTR8JP171Fs3cGvTsRRjPKn7fFFJ', // ภาพสำหรับเกณฑ์สูง (สีแดง)
+      previewImageUrl: 'https://drive.google.com/uc?id=1Fq1SmTR8JP171Fs3cGvTsRRjPKn7fFFJ'
     });
   } else if (fbs >= 100 || (bpSystolic >= 130 && bpSystolic < 140) || (bpDiastolic >= 80 && bpDiastolic < 90)) {
     messages.push({
       type: 'image',
-      originalContentUrl: 'https://drive.google.com/uc?id=1U41tRXROkj9v6lmHNKqAJ2vLyA3CUREi', // ภาพสำหรับเกณฑ์ปานกลาง (สีเหลือง)
-      previewImageUrl: 'https://drive.google.com/uc?id=1U41tRXROkj9v6lmHNKqAJ2vLyA3CUREi'
+      originalContentUrl: 'https://drive.google.com/uc?id=1X-C3EkWZLjD83ZDWblwPp8rR6viz6cHY', // ภาพสำหรับเกณฑ์ปานกลาง (สีเหลือง)
+      previewImageUrl: 'https://drive.google.com/uc?id=1X-C3EkWZLjD83ZDWblwPp8rR6viz6cHY'
     });
   } else {
     messages.push({
       type: 'image',
-      originalContentUrl: 'https://drive.google.com/uc?id=1neLxgykGoVpyPMWaofsqgtmauVHRvj5s', // ภาพสำหรับเกณฑ์ปกติ (สีเขียว)
-      previewImageUrl: 'https://drive.google.com/uc?id=1neLxgykGoVpyPMWaofsqgtmauVHRvj5s'
+      originalContentUrl: 'https://drive.google.com/uc?id=1B3duMLNiErGcyk_s-P_jPQuHtLPq4eBx', // ภาพสำหรับเกณฑ์ปกติ (สีเขียว)
+      previewImageUrl: 'https://drive.google.com/uc?id=1B3duMLNiErGcyk_s-P_jPQuHtLPq4eBx'
     });
   }
 
