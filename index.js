@@ -31,16 +31,14 @@ if (fbs >= 126 || bpSystolic >= 140 || bpDiastolic >= 90) {
       originalContentUrl: 'https://drive.google.com/uc?id=1Z9YF0VVLF8EVnKHDu9LxVnmAojAVZrd-',
       previewImageUrl: 'https://drive.google.com/uc?id=1Z9YF0VVLF8EVnKHDu9LxVnmAojAVZrd-'
     });
-} 
-if ((fbs >= 100 && fbs < 126) || (bpSystolic >= 120 && bpSystolic < 140) || (bpDiastolic >= 80 && bpDiastolic < 90)) {
+} else if ((fbs >= 100 && fbs < 126) || (bpSystolic >= 120 && bpSystolic < 140) || (bpDiastolic >= 80 && bpDiastolic < 90)) {
     // กลุ่มเสี่ยง (สีเหลือง)
     messages.push({
       type: 'image',
       originalContentUrl: 'https://drive.google.com/uc?id=1U41tRXROkj9v6lmHNKqAJ2vLyA3CUREi',
       previewImageUrl: 'https://drive.google.com/uc?id=1U41tRXROkj9v6lmHNKqAJ2vLyA3CUREi'
     });
-} 
-if (fbs < 100 && bpSystolic < 120 && bpDiastolic < 80) {
+} else {
     // กลุ่มปกติ (สีเขียว)
     messages.push({
       type: 'image',
