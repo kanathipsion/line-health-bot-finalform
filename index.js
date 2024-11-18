@@ -10,9 +10,9 @@ app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(express.static('public')); // เสิร์ฟไฟล์ static เช่น form.html
 
-// API Endpoint สำหรับส่งข้อความและรูปภาพไปยังผู้ใช้
+// API Endpoint สำหรับส่งข้อความและสติกเกอร์/รูปภาพไปยังผู้ใช้
 app.post('/send-message', (req, res) => {
-  const { userId, message, packageId, stickerId, imageUrl } = req.body;
+  const { userId, message, fbs, bpSystolic, bpDiastolic } = req.body;
 
   const headers = {
     'Content-Type': 'application/json',
@@ -23,15 +23,25 @@ app.post('/send-message', (req, res) => {
     { type: 'text', text: message },
   ];
 
-  // ตรวจสอบและส่ง URL รูปภาพหากมีการระบุ
-  if (imageUrl) {
+  // ตรวจสอบเงื่อนไข FBS และ BP เพื่อกำหนดการส่งภาพ
+  if (fbs >= 126 || bpSystolic >= 140 || bpDiastolic >= 90) {
     messages.push({
       type: 'image',
-      originalContentUrl: imageUrl,
-      previewImageUrl: imageUrl
+      originalContentUrl: 'https://drive.google.com/uc?id=1Z9YF0VVLF8EVnKHDu9LxVnmAojAVZrd-', // ภาพสำหรับเกณฑ์สูง (สีแดง)
+      previewImageUrl: 'https://drive.google.com/uc?id=1Z9YF0VVLF8EVnKHDu9LxVnmAojAVZrd-'
     });
-  } else if (stickerId) {
-    messages.push({ type: 'sticker', packageId, stickerId });
+  } else if (fbs >= 100 || (bpSystolic >= 130 && bpSystolic < 140) || (bpDiastolic >= 80 && bpDiastolic < 90)) {
+    messages.push({
+      type: 'image',
+      originalContentUrl: 'https://drive.google.com/uc?id=1U41tRXROkj9v6lmHNKqAJ2vLyA3CUREi', // ภาพสำหรับเกณฑ์ปานกลาง (สีเหลือง)
+      previewImageUrl: 'https://drive.google.com/uc?id=1U41tRXROkj9v6lmHNKqAJ2vLyA3CUREi'
+    });
+  } else {
+    messages.push({
+      type: 'image',
+      originalContentUrl: 'https://drive.google.com/uc?id=1neLxgykGoVpyPMWaofsqgtmauVHRvj5s', // ภาพสำหรับเกณฑ์ปกติ (สีเขียว)
+      previewImageUrl: 'https://drive.google.com/uc?id=1neLxgykGoVpyPMWaofsqgtmauVHRvj5s'
+    });
   }
 
   const body = {
