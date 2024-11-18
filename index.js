@@ -12,7 +12,7 @@ app.use(express.static('public')); // เสิร์ฟไฟล์ static เ�
 
 // API Endpoint สำหรับส่งข้อความและสติกเกอร์/รูปภาพไปยังผู้ใช้
 app.post('/send-message', (req, res) => {
-  const { userId, message, fbs, bpSystolic, bpDiastolic } = req.body;
+  const { userId, message, packageId, stickerId } = req.body;
 
   const headers = {
     'Content-Type': 'application/json',
@@ -23,31 +23,28 @@ app.post('/send-message', (req, res) => {
     { type: 'text', text: message },
   ];
 
-  // ตรวจสอบเงื่อนไข FBS และ BP เพื่อกำหนดการส่งภาพ
-if (fbs >= 126 || bpSystolic >= 140 || bpDiastolic >= 90) {
-    console.log('Condition: Red group');
+  // ตรวจสอบ stickerId และส่ง URL รูปภาพแทนสติกเกอร์
+  if (stickerId === '110') { // สติกเกอร์สีเขียว
     messages.push({
-        type: 'image',
-        originalContentUrl: 'https://drive.google.com/uc?id=1Z9YF0VVLF8EVnKHDu9LxVnmAojAVZrd-',
-        previewImageUrl: 'https://drive.google.com/uc?id=1Z9YF0VVLF8EVnKHDu9LxVnmAojAVZrd-'
+      type: 'image',
+      originalContentUrl: 'https://drive.google.com/uc?id=1neLxgykGoVpyPMWaofsqgtmauVHRvj5s',
+      previewImageUrl: 'https://drive.google.com/uc?id=1neLxgykGoVpyPMWaofsqgtmauVHRvj5s'
     });
-} else if ((fbs >= 100 && fbs < 126) || (bpSystolic >= 120 && bpSystolic < 140) || (bpDiastolic >= 80 && bpDiastolic < 90)) {
-    console.log('Condition: Yellow group');
+  } else if (stickerId === '111') { // สติกเกอร์สีเหลือง
     messages.push({
-        type: 'image',
-        originalContentUrl: 'https://drive.google.com/uc?id=1U41tRXROkj9v6lmHNKqAJ2vLyA3CUREi',
-        previewImageUrl: 'https://drive.google.com/uc?id=1U41tRXROkj9v6lmHNKqAJ2vLyA3CUREi'
+      type: 'image',
+      originalContentUrl: 'https://drive.google.com/uc?id=1U41tRXROkj9v6lmHNKqAJ2vLyA3CUREi',
+      previewImageUrl: 'https://drive.google.com/uc?id=1U41tRXROkj9v6lmHNKqAJ2vLyA3CUREi'
     });
-} else {
-    console.log('Condition: Green group');
+  } else if (stickerId === '112') { // สติกเกอร์สีแดง
     messages.push({
-        type: 'image',
-        originalContentUrl: 'https://drive.google.com/uc?id=1neLxgykGoVpyPMWaofsqgtmauVHRvj5s',
-        previewImageUrl: 'https://drive.google.com/uc?id=1neLxgykGoVpyPMWaofsqgtmauVHRvj5s'
+      type: 'image',
+      originalContentUrl: 'https://drive.google.com/uc?id=1Z9YF0VVLF8EVnKHDu9LxVnmAojAVZrd-',
+      previewImageUrl: 'https://drive.google.com/uc?id=1Z9YF0VVLF8EVnKHDu9LxVnmAojAVZrd-'
     });
-}
-
-
+  } else {
+    messages.push({ type: 'sticker', packageId, stickerId });
+  }
 
   const body = {
     to: userId,
@@ -68,11 +65,11 @@ if (fbs >= 126 || bpSystolic >= 140 || bpDiastolic >= 90) {
 
 // API Endpoint สำหรับบันทึกข้อมูลลง Google Sheets
 app.post('/save-to-sheet', (req, res) => {
-  const data = req.body;
+  const { userId, sugarLevel, systolic, diastolic, bmi } = req.body;
 
   // ส่งข้อมูลไปยัง Apps Script
   axios
-    .post(process.env.APPS_SCRIPT_URL, data)
+    .post(process.env.APPS_SCRIPT_URL, { userId, sugarLevel, systolic, diastolic, bmi })
     .then((response) => {
       console.log('Data saved successfully:', response.data);
       res.status(200).send('Data saved successfully!');
