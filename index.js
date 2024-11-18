@@ -25,25 +25,25 @@ app.post('/send-message', (req, res) => {
 
   // ตรวจสอบเงื่อนไข FBS และ BP เพื่อกำหนดการส่งภาพ
 if (fbs >= 126 || bpSystolic >= 140 || bpDiastolic >= 90) {
-    // กลุ่มป่วย (สีแดง)
+    console.log('Condition: Red group');
     messages.push({
-      type: 'image',
-      originalContentUrl: 'https://drive.google.com/uc?id=1Z9YF0VVLF8EVnKHDu9LxVnmAojAVZrd-',
-      previewImageUrl: 'https://drive.google.com/uc?id=1Z9YF0VVLF8EVnKHDu9LxVnmAojAVZrd-'
+        type: 'image',
+        originalContentUrl: 'https://drive.google.com/uc?id=1Z9YF0VVLF8EVnKHDu9LxVnmAojAVZrd-',
+        previewImageUrl: 'https://drive.google.com/uc?id=1Z9YF0VVLF8EVnKHDu9LxVnmAojAVZrd-'
     });
 } else if ((fbs >= 100 && fbs < 126) || (bpSystolic >= 120 && bpSystolic < 140) || (bpDiastolic >= 80 && bpDiastolic < 90)) {
-    // กลุ่มเสี่ยง (สีเหลือง)
+    console.log('Condition: Yellow group');
     messages.push({
-      type: 'image',
-      originalContentUrl: 'https://drive.google.com/uc?id=1U41tRXROkj9v6lmHNKqAJ2vLyA3CUREi',
-      previewImageUrl: 'https://drive.google.com/uc?id=1U41tRXROkj9v6lmHNKqAJ2vLyA3CUREi'
+        type: 'image',
+        originalContentUrl: 'https://drive.google.com/uc?id=1U41tRXROkj9v6lmHNKqAJ2vLyA3CUREi',
+        previewImageUrl: 'https://drive.google.com/uc?id=1U41tRXROkj9v6lmHNKqAJ2vLyA3CUREi'
     });
 } else {
-    // กลุ่มปกติ (สีเขียว)
+    console.log('Condition: Green group');
     messages.push({
-      type: 'image',
-      originalContentUrl: 'https://drive.google.com/uc?id=1neLxgykGoVpyPMWaofsqgtmauVHRvj5s',
-      previewImageUrl: 'https://drive.google.com/uc?id=1neLxgykGoVpyPMWaofsqgtmauVHRvj5s'
+        type: 'image',
+        originalContentUrl: 'https://drive.google.com/uc?id=1neLxgykGoVpyPMWaofsqgtmauVHRvj5s',
+        previewImageUrl: 'https://drive.google.com/uc?id=1neLxgykGoVpyPMWaofsqgtmauVHRvj5s'
     });
 }
 
