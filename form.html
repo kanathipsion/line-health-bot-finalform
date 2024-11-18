@@ -100,4 +100,55 @@
       const weight = document.getElementById('weight').value;
 
       const bmi = (weight / Math.pow(height / 100, 2)).toFixed(2);
-      let healthMessage = `ผลลัพธ์สุขภาพของคุณ:\n- ค่าน้ำตาล: ${sugar}\n- ความดันบน: ${systolic}\n- ความดันล่าง: ${diastolic}\n- BMI: ${
+      let healthMessage = `ผลลัพธ์สุขภาพของคุณ:\n- ค่าน้ำตาล: ${sugar}\n- ความดันบน: ${systolic}\n- ความดันล่าง: ${diastolic}\n- BMI: ${bmi}`;
+
+      fetch('/save-to-sheet', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          userId: userId,
+          sugarLevel: sugar,
+          systolic: systolic,
+          diastolic: diastolic,
+          bmi: bmi,
+        }),
+      })
+        .then((response) => {
+          if (!response.ok) {
+            throw new Error('Failed to save data');
+          }
+          console.log('Data saved successfully!');
+        })
+        .catch((error) => {
+          console.error('Error saving data:', error);
+        });
+
+      fetch('/send-message', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          userId: userId,
+          message: healthMessage,
+          systolic: systolic,
+          diastolic: diastolic,
+          fbs: sugar,
+        }),
+      })
+        .then((response) => {
+          if (!response.ok) {
+            throw new Error('Failed to send message');
+          }
+          alert('ส่งข้อมูลสำเร็จ! กรุณาตรวจสอบ LINE ของคุณ');
+        })
+        .catch((error) => {
+          console.error('Error sending message:', error);
+          alert('เกิดข้อผิดพลาด: ' + error.message);
+        });
+    });
+  </script>
+</body>
+</html>
