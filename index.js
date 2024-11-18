@@ -33,14 +33,14 @@ app.post('/send-message', (req, res) => {
   } else if (stickerId === '111') { // สติกเกอร์สีเหลือง
     messages.push({
       type: 'image',
-      originalContentUrl: 'https://drive.google.com/file/d/1U41tRXROkj9v6lmHNKqAJ2vLyA3CUREi',
-      previewImageUrl: 'https://drive.google.com/file/d/1U41tRXROkj9v6lmHNKqAJ2vLyA3CUREi'
+      originalContentUrl: 'https://drive.google.com/uc?id=1U41tRXROkj9v6lmHNKqAJ2vLyA3CUREi',
+      previewImageUrl: 'https://drive.google.com/uc?id=1U41tRXROkj9v6lmHNKqAJ2vLyA3CUREi'
     });
   } else if (stickerId === '112') { // สติกเกอร์สีแดง
     messages.push({
       type: 'image',
-      originalContentUrl: 'https://drive.google.com/file/d/1Z9YF0VVLF8EVnKHDu9LxVnmAojAVZrd-',
-      previewImageUrl: 'https://drive.google.com/file/d/1Z9YF0VVLF8EVnKHDu9LxVnmAojAVZrd-'
+      originalContentUrl: 'https://drive.google.com/uc?id=1neLxgykGoVpyPMWaofsqgtmauVHRvj5s',
+      previewImageUrl: 'https://drive.google.com/uc?id=1neLxgykGoVpyPMWaofsqgtmauVHRvj5s'
     });
   } else {
     messages.push({ type: 'sticker', packageId, stickerId });
