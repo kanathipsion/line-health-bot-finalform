@@ -39,8 +39,8 @@ app.post('/send-message', (req, res) => {
   } else if (stickerId === '112') { // สติกเกอร์สีแดง
     messages.push({
       type: 'image',
-      originalContentUrl: 'https://drive.google.com/uc?id=1neLxgykGoVpyPMWaofsqgtmauVHRvj5s',
-      previewImageUrl: 'https://drive.google.com/uc?id=1neLxgykGoVpyPMWaofsqgtmauVHRvj5s'
+      originalContentUrl: 'https://drive.google.com/uc?id=1Z9YF0VVLF8EVnKHDu9LxVnmAojAVZrd-',
+      previewImageUrl: 'https://drive.google.com/uc?id=1Z9YF0VVLF8EVnKHDu9LxVnmAojAVZrd-'
     });
   } else {
     messages.push({ type: 'sticker', packageId, stickerId });
