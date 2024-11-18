@@ -67,9 +67,17 @@ app.post('/send-message', (req, res) => {
 app.post('/save-to-sheet', (req, res) => {
   const { userId, sugarLevel, systolic, diastolic, bmi } = req.body;
 
+  const data = {
+    userId: userId,
+    sugarLevel: sugarLevel,
+    systolic: systolic,
+    diastolic: diastolic,
+    bmi: bmi,
+  };
+
   // ส่งข้อมูลไปยัง Apps Script
   axios
-    .post(process.env.APPS_SCRIPT_URL, { userId, sugarLevel, systolic, diastolic, bmi })
+    .post(process.env.APPS_SCRIPT_URL, data)
     .then((response) => {
       console.log('Data saved successfully:', response.data);
       res.status(200).send('Data saved successfully!');
