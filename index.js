@@ -12,7 +12,7 @@ app.use(express.static('public')); // เสิร์ฟไฟล์ static เ�
 
 // API Endpoint สำหรับส่งข้อความและรูปภาพไปยังผู้ใช้
 app.post('/send-message', (req, res) => {
-  const { userId, message, packageId, stickerId, imageUrl } = req.body;
+  const { userId, message, imageUrl } = req.body;
 
   const headers = {
     'Content-Type': 'application/json',
@@ -30,8 +30,6 @@ app.post('/send-message', (req, res) => {
       originalContentUrl: imageUrl,
       previewImageUrl: imageUrl
     });
-  } else if (stickerId) {
-    messages.push({ type: 'sticker', packageId, stickerId });
   }
 
   const body = {
