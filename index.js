@@ -10,44 +10,43 @@ app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(express.static('public')); // เสิร์ฟไฟล์ static เช่น form.html
 
-// API Endpoint สำหรับส่งข้อความและสติกเกอร์/รูปภาพไปยังผู้ใช้
+// URLs สำหรับภาพที่ใช้แทนสติกเกอร์
+const imageUrls = {
+  green: 'https://drive.google.com/uc?id=1neLxgykGoVpyPMWaofsqgtmauVHRvj5s',
+  yellow: 'https://drive.google.com/uc?id=1U41tRXROkj9v6lmHNKqAJ2vLyA3CUREi',
+  red: 'https://drive.google.com/uc?id=1Z9YF0VVLF8EVnKHDu9LxVnmAojAVZrd-'
+};
+
+// API Endpoint สำหรับส่งข้อความและภาพไปยังผู้ใช้
 app.post('/send-message', (req, res) => {
-  const { userId, message, packageId, stickerId } = req.body;
+  const { userId, message, imageUrl } = req.body;
 
   const headers = {
     'Content-Type': 'application/json',
     'Authorization': `Bearer ${process.env.LINE_CHANNEL_ACCESS_TOKEN}`, // ใช้ Access Token จาก Config Vars
   };
 
-  let messages = [
-    { type: 'text', text: message },
-  ];
-
-  // แทนที่สติกเกอร์สีเขียวด้วยรูปภาพจาก Google Drive
-  if (stickerId === '110') { // ตรวจสอบว่าเป็นสติกเกอร์สีเขียว
-    messages.push({
-      type: 'image',
-      originalContentUrl: 'https://drive.google.com/uc?id=1neLxgykGoVpyPMWaofsqgtmauVHRvj5s',
-      previewImageUrl: 'https://drive.google.com/uc?id=1neLxgykGoVpyPMWaofsqgtmauVHRvj5s'
-    });
-  } else {
-    messages.push({ type: 'sticker', packageId, stickerId });
-  }
-
   const body = {
     to: userId,
-    messages: messages,
+    messages: [
+      { type: 'text', text: message },
+      {
+        type: 'image',
+        originalContentUrl: imageUrl,
+        previewImageUrl: imageUrl
+      }
+    ]
   };
 
   axios
     .post('https://api.line.me/v2/bot/message/push', body, { headers })
     .then(() => {
-      console.log('Message sent successfully!');
-      res.status(200).send('Message sent successfully!');
+      console.log('Message and image sent successfully!');
+      res.status(200).send('Message and image sent successfully!');
     })
     .catch((err) => {
-      console.error('Error sending message:', err.response?.data || err.message);
-      res.status(500).send('Error sending message');
+      console.error('Error sending message and image:', err.response?.data || err.message);
+      res.status(500).send('Error sending message and image');
     });
 });
 
