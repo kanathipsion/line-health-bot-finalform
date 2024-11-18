@@ -10,26 +10,41 @@ app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(express.static('public')); // เสิร์ฟไฟล์ static เช่น form.html
 
-// API Endpoint สำหรับส่งข้อความและรูปภาพไปยังผู้ใช้
+// API Endpoint สำหรับส่งข้อความและสติกเกอร์/รูปภาพไปยังผู้ใช้
 app.post('/send-message', (req, res) => {
-  const { userId, message, imageUrl } = req.body;
+  const { userId, fbs, systolic, diastolic } = req.body;
 
   const headers = {
     'Content-Type': 'application/json',
     'Authorization': `Bearer ${process.env.LINE_CHANNEL_ACCESS_TOKEN}`, // ใช้ Access Token จาก Config Vars
   };
 
-  let messages = [
-    { type: 'text', text: message },
-  ];
+  let healthMessage = `ผลลัพธ์สุขภาพของคุณ:\n- ค่าน้ำตาลในเลือด: ${fbs}\n- ความดันบน: ${systolic}\n- ความดันล่าง: ${diastolic}`;
+  let imageUrl = '';
 
-  if (imageUrl) {
-    messages.push({
+  // ตรวจสอบเงื่อนไขเพื่อส่งภาพ
+  if (fbs < 100 || systolic < 120 || diastolic < 80) {
+    // กลุ่มปกติ
+    imageUrl = 'https://drive.google.com/uc?id=1neLxgykGoVpyPMWaofsqgtmauVHRvj5s';
+    healthMessage += '\nกลุ่มปกติ';
+  } else if ((fbs >= 100 && fbs <= 125) || (systolic >= 120 && systolic <= 139) || (diastolic >= 80 && diastolic <= 89)) {
+    // กลุ่มเสี่ยง
+    imageUrl = 'https://drive.google.com/uc?id=1U41tRXROkj9v6lmHNKqAJ2vLyA3CUREi';
+    healthMessage += '\nกลุ่มเสี่ยง';
+  } else if (fbs > 125 || systolic > 139 || diastolic > 89) {
+    // กลุ่มป่วย
+    imageUrl = 'https://drive.google.com/uc?id=1Z9YF0VVLF8EVnKHDu9LxVnmAojAVZrd-';
+    healthMessage += '\nกลุ่มป่วย';
+  }
+
+  const messages = [
+    { type: 'text', text: healthMessage },
+    {
       type: 'image',
       originalContentUrl: imageUrl,
-      previewImageUrl: imageUrl,
-    });
-  }
+      previewImageUrl: imageUrl
+    }
+  ];
 
   const body = {
     to: userId,
