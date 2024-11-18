@@ -10,9 +10,9 @@ app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(express.static('public')); // เสิร์ฟไฟล์ static เช่น form.html
 
-// API Endpoint สำหรับส่งข้อความและสติกเกอร์/รูปภาพไปยังผู้ใช้
+// API Endpoint สำหรับส่งข้อความและรูปภาพไปยังผู้ใช้
 app.post('/send-message', (req, res) => {
-  const { userId, message, packageId, stickerId } = req.body;
+  const { userId, message, packageId, stickerId, imageUrl } = req.body;
 
   const headers = {
     'Content-Type': 'application/json',
@@ -23,26 +23,14 @@ app.post('/send-message', (req, res) => {
     { type: 'text', text: message },
   ];
 
-  // ตรวจสอบ stickerId และส่ง URL รูปภาพแทนสติกเกอร์
-  if (stickerId === '110') { // สติกเกอร์สีเขียว
+  // ตรวจสอบและส่ง URL รูปภาพหากมีการระบุ
+  if (imageUrl) {
     messages.push({
       type: 'image',
-      originalContentUrl: 'https://drive.google.com/uc?id=1neLxgykGoVpyPMWaofsqgtmauVHRvj5s',
-      previewImageUrl: 'https://drive.google.com/uc?id=1neLxgykGoVpyPMWaofsqgtmauVHRvj5s'
+      originalContentUrl: imageUrl,
+      previewImageUrl: imageUrl
     });
-  } else if (stickerId === '111') { // สติกเกอร์สีเหลือง
-    messages.push({
-      type: 'image',
-      originalContentUrl: 'https://drive.google.com/uc?id=1U41tRXROkj9v6lmHNKqAJ2vLyA3CUREi',
-      previewImageUrl: 'https://drive.google.com/uc?id=1U41tRXROkj9v6lmHNKqAJ2vLyA3CUREi'
-    });
-  } else if (stickerId === '112') { // สติกเกอร์สีแดง
-    messages.push({
-      type: 'image',
-      originalContentUrl: 'https://drive.google.com/uc?id=1Z9YF0VVLF8EVnKHDu9LxVnmAojAVZrd-',
-      previewImageUrl: 'https://drive.google.com/uc?id=1Z9YF0VVLF8EVnKHDu9LxVnmAojAVZrd-'
-    });
-  } else {
+  } else if (stickerId) {
     messages.push({ type: 'sticker', packageId, stickerId });
   }
 
