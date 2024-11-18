@@ -101,22 +101,19 @@
 
       const bmi = (weight / Math.pow(height / 100, 2)).toFixed(2);
       const pressure = `${pressureSys}/${pressureDia}`;
-      let healthMessage = `ผลลัพธ์สุขภาพของคุณ:\n- ค่าน้ำตาล: ${sugar}\n- ค่าความดัน: ${pressure}\n- BMI: ${bmi}`;
+      let healthMessage = `ผลลัพธ์สุขภาพของคุณ:\n- ค่าน้ำตาล: ${sugar}\n- ความดันตัวบน: ${pressureSys}\n- ความดันตัวล่าง: ${pressureDia}\n- BMI: ${bmi}`;
 
-      let packageId = '1'; // ตัวอย่าง Package ID
-      let stickerId = '13'; // ตัวอย่าง Sticker ID
-
-      if (bmi < 18.5) {
-        healthMessage += ' (น้ำหนักน้อย)';
-      } else if (bmi < 25) {
-        healthMessage += ' (ปกติ)';
-        stickerId = '110'; // ตัวอย่างสติกเกอร์สีเขียว
-      } else if (bmi < 30) {
-        healthMessage += ' (น้ำหนักเกิน)';
-        stickerId = '111'; // ตัวอย่างสติกเกอร์สีเหลือง
-      } else {
-        healthMessage += ' (อ้วน)';
-        stickerId = '112'; // ตัวอย่างสติกเกอร์สีแดง
+      // Determine health group and image
+      let imageUrl = '';
+      if (sugar < 100 && pressureSys < 120 && pressureDia < 80) {
+        healthMessage += '\n(กลุ่มปกติ)';
+        imageUrl = 'https://drive.google.com/uc?id=1B3duMLNiErGcyk_s-P_jPQuHtLPq4eBx';
+      } else if ((sugar >= 100 && sugar <= 125) || (pressureSys >= 120 && pressureSys <= 139) || (pressureDia >= 80 && pressureDia <= 89)) {
+        healthMessage += '\n(กลุ่มเสี่ยง)';
+        imageUrl = 'https://drive.google.com/uc?id=1X-C3EkWZLjD83ZDWblwPp8rR6viz6cHY';
+      } else if (sugar > 125 || pressureSys > 139 || pressureDia > 89) {
+        healthMessage += '\n(กลุ่มป่วย)';
+        imageUrl = 'https://drive.google.com/uc?id=1Fq1SmTR8JP171Fs3cGvTsRRjPKn7fFFJ';
       }
 
       // บันทึกข้อมูลลง Google Sheet
@@ -128,7 +125,8 @@
         body: JSON.stringify({
           userId: userId,
           sugarLevel: sugar,
-          bloodPressure: pressure,
+          systolicPressure: pressureSys,
+          diastolicPressure: pressureDia,
           bmi: bmi,
         }),
       })
@@ -142,7 +140,7 @@
           console.error('Error saving data:', error);
         });
 
-      // ส่งข้อความและสติกเกอร์ไปยัง LINE
+      // ส่งข้อความและรูปภาพไปยัง LINE
       fetch('/send-message', {
         method: 'POST',
         headers: {
@@ -151,8 +149,7 @@
         body: JSON.stringify({
           userId: userId,
           message: healthMessage,
-          packageId: packageId,
-          stickerId: stickerId,
+          imageUrl: imageUrl,
         }),
       })
         .then((response) => {
