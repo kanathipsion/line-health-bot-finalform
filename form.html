@@ -66,10 +66,10 @@
       <label for="sugar">ค่าน้ำตาล (mg/dL):</label>
       <input type="number" id="sugar" name="sugar" required>
 
-      <label for="pressureSys">ค่าความดันตัวบน (mmHg):</label>
+      <label for="pressureSys">ค่าความดันบน (mmHg):</label>
       <input type="number" id="pressureSys" name="pressureSys" required>
 
-      <label for="pressureDia">ค่าความดันตัวล่าง (mmHg):</label>
+      <label for="pressureDia">ค่าความดันล่าง (mmHg):</label>
       <input type="number" id="pressureDia" name="pressureDia" required>
 
       <label for="height">ส่วนสูง (cm):</label>
@@ -100,11 +100,10 @@
       const weight = document.getElementById('weight').value;
 
       const bmi = (weight / Math.pow(height / 100, 2)).toFixed(2);
-      const pressure = `${pressureSys}/${pressureDia}`;
-      let healthMessage = `ผลลัพธ์สุขภาพของคุณ:\n- ค่าน้ำตาล: ${sugar}\n- ความดันตัวบน: ${pressureSys}\n- ความดันตัวล่าง: ${pressureDia}\n- BMI: ${bmi}`;
+      let healthMessage = `ผลลัพธ์สุขภาพของคุณ:\n- ค่าน้ำตาล: ${sugar}\n- ค่าความดันบน: ${pressureSys}\n- ค่าความดันล่าง: ${pressureDia}\n- BMI: ${bmi}`;
 
-      // Determine health group and image
-      let imageUrl = '';
+      let imageUrl = ''; // Default image URL
+
       if (sugar < 100 && pressureSys < 120 && pressureDia < 80) {
         healthMessage += '\n(กลุ่มปกติ)';
         imageUrl = 'https://drive.google.com/uc?id=1B3duMLNiErGcyk_s-P_jPQuHtLPq4eBx';
@@ -125,8 +124,8 @@
         body: JSON.stringify({
           userId: userId,
           sugarLevel: sugar,
-          systolicPressure: pressureSys,
-          diastolicPressure: pressureDia,
+          bloodPressureSys: pressureSys,
+          bloodPressureDia: pressureDia,
           bmi: bmi,
         }),
       })
