@@ -24,25 +24,29 @@ app.post('/send-message', (req, res) => {
   ];
 
   // ตรวจสอบเงื่อนไข FBS และ BP เพื่อกำหนดการส่งภาพ
-  if (fbs >= 126 || bpSystolic >= 140 || bpDiastolic >= 90) {
+if (fbs >= 126 || bpSystolic >= 140 || bpDiastolic >= 90) {
+    // กลุ่มป่วย (สีแดง)
     messages.push({
       type: 'image',
-      originalContentUrl: 'https://drive.google.com/uc?id=1Fq1SmTR8JP171Fs3cGvTsRRjPKn7fFFJ', // ภาพสำหรับเกณฑ์สูง (สีแดง)
-      previewImageUrl: 'https://drive.google.com/uc?id=1Fq1SmTR8JP171Fs3cGvTsRRjPKn7fFFJ'
+      originalContentUrl: 'https://drive.google.com/uc?id=1Z9YF0VVLF8EVnKHDu9LxVnmAojAVZrd-',
+      previewImageUrl: 'https://drive.google.com/uc?id=1Z9YF0VVLF8EVnKHDu9LxVnmAojAVZrd-'
     });
-  } else if (fbs >= 100 || (bpSystolic >= 130 && bpSystolic < 140) || (bpDiastolic >= 80 && bpDiastolic < 90)) {
+} else if ((fbs >= 100 && fbs < 126) || (bpSystolic >= 120 && bpSystolic < 140) || (bpDiastolic >= 80 && bpDiastolic < 90)) {
+    // กลุ่มเสี่ยง (สีเหลือง)
     messages.push({
       type: 'image',
-      originalContentUrl: 'https://drive.google.com/uc?id=1X-C3EkWZLjD83ZDWblwPp8rR6viz6cHY', // ภาพสำหรับเกณฑ์ปานกลาง (สีเหลือง)
-      previewImageUrl: 'https://drive.google.com/uc?id=1X-C3EkWZLjD83ZDWblwPp8rR6viz6cHY'
+      originalContentUrl: 'https://drive.google.com/uc?id=1U41tRXROkj9v6lmHNKqAJ2vLyA3CUREi',
+      previewImageUrl: 'https://drive.google.com/uc?id=1U41tRXROkj9v6lmHNKqAJ2vLyA3CUREi'
     });
-  } else {
+} else if (fbs < 100 && bpSystolic < 120 && bpDiastolic < 80) {
+    // กลุ่มปกติ (สีเขียว)
     messages.push({
       type: 'image',
-      originalContentUrl: 'https://drive.google.com/uc?id=1B3duMLNiErGcyk_s-P_jPQuHtLPq4eBx', // ภาพสำหรับเกณฑ์ปกติ (สีเขียว)
-      previewImageUrl: 'https://drive.google.com/uc?id=1B3duMLNiErGcyk_s-P_jPQuHtLPq4eBx'
+      originalContentUrl: 'https://drive.google.com/uc?id=1neLxgykGoVpyPMWaofsqgtmauVHRvj5s',
+      previewImageUrl: 'https://drive.google.com/uc?id=1neLxgykGoVpyPMWaofsqgtmauVHRvj5s'
     });
-  }
+}
+
 
   const body = {
     to: userId,
