@@ -8,39 +8,30 @@ const port = process.env.PORT || 3000;
 // Middleware
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
-app.use(express.static('public'));
+app.use(express.static('public')); // เสิร์ฟไฟล์ static เช่น form.html
 
 // API Endpoint สำหรับส่งข้อความและรูปภาพไปยังผู้ใช้
 app.post('/send-message', (req, res) => {
-  const { userId, message, systolic, diastolic, fbs } = req.body;
+  const { userId, message, packageId, stickerId, imageUrl } = req.body;
 
   const headers = {
     'Content-Type': 'application/json',
-    'Authorization': `Bearer ${process.env.LINE_CHANNEL_ACCESS_TOKEN}`,
+    'Authorization': `Bearer ${process.env.LINE_CHANNEL_ACCESS_TOKEN}`, // ใช้ Access Token จาก Config Vars
   };
-
-  let imageUrl = '';
-
-  // ตรวจสอบเงื่อนไขและกำหนด URL รูปภาพ
-  if (fbs < 100 && systolic < 120 && diastolic < 80) {
-    imageUrl = 'https://drive.google.com/uc?id=1neLxgykGoVpyPMWaofsqgtmauVHRvj5s'; // กลุ่มปกติ
-  } else if ((fbs >= 100 && fbs <= 125) || (systolic >= 120 && systolic <= 139) || (diastolic >= 80 && diastolic <= 89)) {
-    imageUrl = 'https://drive.google.com/uc?id=1U41tRXROkj9v6lmHNKqAJ2vLyA3CUREi'; // กลุ่มเสี่ยง
-  } else if (fbs > 125 || systolic > 139 || diastolic > 89) {
-    imageUrl = 'https://drive.google.com/uc?id=1Z9YF0VVLF8EVnKHDu9LxVnmAojAVZrd-'; // กลุ่มป่วย
-  }
 
   let messages = [
     { type: 'text', text: message },
   ];
 
-  // ถ้ามี URL รูปภาพ ให้เพิ่มข้อความรูปภาพ
+  // ตรวจสอบและส่ง URL รูปภาพหากมีการระบุ
   if (imageUrl) {
     messages.push({
       type: 'image',
       originalContentUrl: imageUrl,
       previewImageUrl: imageUrl
     });
+  } else if (stickerId) {
+    messages.push({ type: 'sticker', packageId, stickerId });
   }
 
   const body = {
