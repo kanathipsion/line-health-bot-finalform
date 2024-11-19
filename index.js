@@ -1,4 +1,3 @@
-// โค้ดใน index.js (หลังจากการแก้ไข)
 const express = require('express');
 const bodyParser = require('body-parser');
 const axios = require('axios');
