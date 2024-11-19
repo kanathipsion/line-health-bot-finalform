@@ -48,20 +48,10 @@ app.post('/send-message', (req, res) => {
 // API Endpoint สำหรับบันทึกข้อมูลลง Google Sheets
 app.post('/save-to-sheet', (req, res) => {
   const data = req.body;
-
-  // เพิ่มการส่งค่ากลุ่มไปยังชีต
-  const dataToSend = {
-    userId: data.userId,
-    sugarLevel: data.sugarLevel,
-    bloodPressureSys: data.bloodPressureSys, 
-    bloodPressureDia: data.bloodPressureDia, 
-    bmi: data.bmi,
-    group: data.group // เพิ่ม group
-  };
+  console.log('Data received:', data); // เพิ่มการ log ข้อมูลที่ได้รับ
 
   // ส่งข้อมูลไปยัง Apps Script
-  axios
-    .post(process.env.APPS_SCRIPT_URL, dataToSend)
+  axios.post(process.env.APPS_SCRIPT_URL, data)
     .then((response) => {
       console.log('Data saved successfully:', response.data);
       res.status(200).send('Data saved successfully!');
