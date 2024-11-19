@@ -104,16 +104,20 @@
 
       let imageUrl = ''; // Default image URL
 
-      if (sugar < 100 && pressureSys < 120 && pressureDia < 80) {
-        healthMessage += '\n(กลุ่มปกติ)';
-        imageUrl = 'https://drive.google.com/uc?id=1B3duMLNiErGcyk_s-P_jPQuHtLPq4eBx';
-      } else if ((sugar >= 100 && sugar <= 125) || (pressureSys >= 120 && pressureSys <= 139) || (pressureDia >= 80 && pressureDia <= 89)) {
-        healthMessage += '\n(กลุ่มเสี่ยง)';
-        imageUrl = 'https://drive.google.com/uc?id=1X-C3EkWZLjD83ZDWblwPp8rR6viz6cHY';
-      } else if (sugar > 125 || pressureSys > 139 || pressureDia > 89) {
-        healthMessage += '\n(กลุ่มป่วย)';
-        imageUrl = 'https://drive.google.com/uc?id=1Fq1SmTR8JP171Fs3cGvTsRRjPKn7fFFJ';
-      }
+// ตรวจสอบสถานะตามค่าความรุนแรงสูงสุด
+if (sugar > 125 || pressureSys > 139 || pressureDia > 89) {
+    // กลุ่มป่วย (ถ้ามีค่าใดค่าหนึ่งอยู่ในระดับป่วย)
+    healthMessage += '\n(กลุ่มป่วย)';
+    imageUrl = 'https://drive.google.com/uc?id=1Fq1SmTR8JP171Fs3cGvTsRRjPKn7fFFJ';
+} else if ((sugar >= 100 && sugar <= 125) || (pressureSys >= 120 && pressureSys <= 139) || (pressureDia >= 80 && pressureDia <= 89)) {
+    // กลุ่มเสี่ยง (ถ้ามีค่าใดค่าหนึ่งอยู่ในระดับเสี่ยง แต่ไม่มีค่าที่เป็นป่วย)
+    healthMessage += '\n(กลุ่มเสี่ยง)';
+    imageUrl = 'https://drive.google.com/uc?id=1X-C3EkWZLjD83ZDWblwPp8rR6viz6cHY';
+} else {
+    // กลุ่มปกติ (ถ้าค่าทั้งหมดอยู่ในระดับปกติ)
+    healthMessage += '\n(กลุ่มปกติ)';
+    imageUrl = 'https://drive.google.com/uc?id=1B3duMLNiErGcyk_s-P_jPQuHtLPq4eBx';
+}
 
       // บันทึกข้อมูลลง Google Sheet
       fetch('/save-to-sheet', {
