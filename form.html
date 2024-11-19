@@ -101,23 +101,27 @@
 
       const bmi = (weight / Math.pow(height / 100, 2)).toFixed(2);
       let healthMessage = `ผลลัพธ์สุขภาพของคุณ:\n- ค่าน้ำตาล: ${sugar}\n- ค่าความดันบน: ${pressureSys}\n- ค่าความดันล่าง: ${pressureDia}\n- BMI: ${bmi}`;
+      let group = ''; // ค่ากลุ่ม
 
       let imageUrl = ''; // Default image URL
 
-// ตรวจสอบสถานะตามค่าความรุนแรงสูงสุด
-if (sugar > 125 || pressureSys > 139 || pressureDia > 89) {
-    // กลุ่มป่วย (ถ้ามีค่าใดค่าหนึ่งอยู่ในระดับป่วย)
-    healthMessage += '\n(กลุ่มป่วย)';
-    imageUrl = 'https://drive.google.com/uc?id=1Fq1SmTR8JP171Fs3cGvTsRRjPKn7fFFJ';
-} else if ((sugar >= 100 && sugar <= 125) || (pressureSys >= 120 && pressureSys <= 139) || (pressureDia >= 80 && pressureDia <= 89)) {
-    // กลุ่มเสี่ยง (ถ้ามีค่าใดค่าหนึ่งอยู่ในระดับเสี่ยง แต่ไม่มีค่าที่เป็นป่วย)
-    healthMessage += '\n(กลุ่มเสี่ยง)';
-    imageUrl = 'https://drive.google.com/uc?id=1X-C3EkWZLjD83ZDWblwPp8rR6viz6cHY';
-} else {
-    // กลุ่มปกติ (ถ้าค่าทั้งหมดอยู่ในระดับปกติ)
-    healthMessage += '\n(กลุ่มปกติ)';
-    imageUrl = 'https://drive.google.com/uc?id=1B3duMLNiErGcyk_s-P_jPQuHtLPq4eBx';
-}
+      // ตรวจสอบสถานะตามค่าความรุนแรงสูงสุด
+      if (sugar > 125 || pressureSys > 139 || pressureDia > 89) {
+          // กลุ่มป่วย (ถ้ามีค่าใดค่าหนึ่งอยู่ในระดับป่วย)
+          healthMessage += '\n(กลุ่มป่วย)';
+          group = 'กลุ่มป่วย';
+          imageUrl = 'https://drive.google.com/uc?id=1Fq1SmTR8JP171Fs3cGvTsRRjPKn7fFFJ';
+      } else if ((sugar >= 100 && sugar <= 125) || (pressureSys >= 120 && pressureSys <= 139) || (pressureDia >= 80 && pressureDia <= 89)) {
+          // กลุ่มเสี่ยง (ถ้ามีค่าใดค่าหนึ่งอยู่ในระดับเสี่ยง แต่ไม่มีค่าที่เป็นป่วย)
+          healthMessage += '\n(กลุ่มเสี่ยง)';
+          group = 'กลุ่มเสี่ยง';
+          imageUrl = 'https://drive.google.com/uc?id=1X-C3EkWZLjD83ZDWblwPp8rR6viz6cHY';
+      } else {
+          // กลุ่มปกติ (ถ้าค่าทั้งหมดอยู่ในระดับปกติ)
+          healthMessage += '\n(กลุ่มปกติ)';
+          group = 'กลุ่มปกติ';
+          imageUrl = 'https://drive.google.com/uc?id=1B3duMLNiErGcyk_s-P_jPQuHtLPq4eBx';
+      }
 
       // บันทึกข้อมูลลง Google Sheet
       fetch('/save-to-sheet', {
@@ -127,10 +131,7 @@ if (sugar > 125 || pressureSys > 139 || pressureDia > 89) {
         },
         body: JSON.stringify({
           userId: userId,
-          sugarLevel: sugar,
-          bloodPressureSys: pressureSys,
-          bloodPressureDia: pressureDia,
-          bmi: bmi,
+          group: group, // บันทึกเฉพาะค่ากลุ่ม
         }),
       })
         .then((response) => {
