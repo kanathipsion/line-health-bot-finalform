@@ -49,9 +49,18 @@ app.post('/send-message', (req, res) => {
 app.post('/save-to-sheet', (req, res) => {
   const data = req.body;
 
+  // เพิ่มค่าความดันซิสโตลิกและไดแอสโตลิกในข้อมูลที่จะส่งไปยัง Google Sheets
+  const dataToSend = {
+    userId: data.userId,
+    sugarLevel: data.sugarLevel,
+    bloodPressureSys: data.bloodPressureSys, // เพิ่มค่าความดันบน
+    bloodPressureDia: data.bloodPressureDia, // เพิ่มค่าความดันล่าง
+    bmi: data.bmi,
+  };
+
   // ส่งข้อมูลไปยัง Apps Script
   axios
-    .post(process.env.APPS_SCRIPT_URL, data)
+    .post(process.env.APPS_SCRIPT_URL, dataToSend)
     .then((response) => {
       console.log('Data saved successfully:', response.data);
       res.status(200).send('Data saved successfully!');
