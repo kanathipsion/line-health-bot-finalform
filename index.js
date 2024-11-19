@@ -1,3 +1,4 @@
+// โค้ดใน index.js (หลังจากการแก้ไข)
 const express = require('express');
 const bodyParser = require('body-parser');
 const axios = require('axios');
@@ -12,7 +13,7 @@ app.use(express.static('public')); // เสิร์ฟไฟล์ static เ�
 
 // API Endpoint สำหรับส่งข้อความและรูปภาพไปยังผู้ใช้
 app.post('/send-message', (req, res) => {
-  const { userId, message, imageUrl } = req.body;
+  const { userId, message, imageUrl, group } = req.body; // เพิ่ม group
 
   const headers = {
     'Content-Type': 'application/json',
@@ -49,9 +50,19 @@ app.post('/send-message', (req, res) => {
 app.post('/save-to-sheet', (req, res) => {
   const data = req.body;
 
+  // เพิ่มการส่งค่ากลุ่มไปยังชีต
+  const dataToSend = {
+    userId: data.userId,
+    sugarLevel: data.sugarLevel,
+    bloodPressureSys: data.bloodPressureSys, 
+    bloodPressureDia: data.bloodPressureDia, 
+    bmi: data.bmi,
+    group: data.group // เพิ่ม group
+  };
+
   // ส่งข้อมูลไปยัง Apps Script
   axios
-    .post(process.env.APPS_SCRIPT_URL, data)
+    .post(process.env.APPS_SCRIPT_URL, dataToSend)
     .then((response) => {
       console.log('Data saved successfully:', response.data);
       res.status(200).send('Data saved successfully!');
