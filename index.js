@@ -49,13 +49,26 @@ app.post('/send-message', (req, res) => {
 app.post('/save-to-sheet', (req, res) => {
   const data = req.body;
 
-  // เพิ่มค่าความดันซิสโตลิกและไดแอสโตลิกในข้อมูลที่จะส่งไปยัง Google Sheets
+  // คำนวณกลุ่มตามเกณฑ์ที่กำหนด
+  let group = '';
+  if (data.sugarLevel > 125 || data.bloodPressureSys > 139 || data.bloodPressureDia > 89) {
+    group = 'กลุ่มป่วย';
+  } else if ((data.sugarLevel >= 100 && data.sugarLevel <= 125) || 
+             (data.bloodPressureSys >= 120 && data.bloodPressureSys <= 139) || 
+             (data.bloodPressureDia >= 80 && data.bloodPressureDia <= 89)) {
+    group = 'กลุ่มเสี่ยง';
+  } else {
+    group = 'กลุ่มปกติ';
+  }
+
+  // เพิ่มข้อมูล group ในข้อมูลที่จะส่งไปยัง Google Sheets
   const dataToSend = {
     userId: data.userId,
     sugarLevel: data.sugarLevel,
-    bloodPressureSys: data.bloodPressureSys, // เพิ่มค่าความดันบน
-    bloodPressureDia: data.bloodPressureDia, // เพิ่มค่าความดันล่าง
+    bloodPressureSys: data.bloodPressureSys, // ค่าความดันบน
+    bloodPressureDia: data.bloodPressureDia, // ค่าความดันล่าง
     bmi: data.bmi,
+    group: group, // เพิ่มข้อมูลกลุ่ม
   };
 
   // ส่งข้อมูลไปยัง Apps Script
