@@ -74,7 +74,7 @@ app.post('/webhook', (req, res) => {
     if (event.type === 'message' && event.message.type === 'text') {
       const userMessage = event.message.text;
 
-      if (userMessage === 'คำนวนผลสุขภาพ') {
+      if (userMessage === 'คำนวณผลสุขภาพ') {
         const formUrl = `https://${req.headers.host}/form?userId=${event.source.userId}`;
         const replyMessage = {
           type: 'text',
