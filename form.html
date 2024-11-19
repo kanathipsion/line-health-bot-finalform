@@ -107,17 +107,14 @@
 
       // ตรวจสอบสถานะตามค่าความรุนแรงสูงสุด
       if (sugar > 125 || pressureSys > 139 || pressureDia > 89) {
-          // กลุ่มป่วย (ถ้ามีค่าใดค่าหนึ่งอยู่ในระดับป่วย)
           healthMessage += '\n(กลุ่มป่วย)';
           group = 'กลุ่มป่วย';
           imageUrl = 'https://drive.google.com/uc?id=1Fq1SmTR8JP171Fs3cGvTsRRjPKn7fFFJ';
       } else if ((sugar >= 100 && sugar <= 125) || (pressureSys >= 120 && pressureSys <= 139) || (pressureDia >= 80 && pressureDia <= 89)) {
-          // กลุ่มเสี่ยง (ถ้ามีค่าใดค่าหนึ่งอยู่ในระดับเสี่ยง แต่ไม่มีค่าที่เป็นป่วย)
           healthMessage += '\n(กลุ่มเสี่ยง)';
           group = 'กลุ่มเสี่ยง';
           imageUrl = 'https://drive.google.com/uc?id=1X-C3EkWZLjD83ZDWblwPp8rR6viz6cHY';
       } else {
-          // กลุ่มปกติ (ถ้าค่าทั้งหมดอยู่ในระดับปกติ)
           healthMessage += '\n(กลุ่มปกติ)';
           group = 'กลุ่มปกติ';
           imageUrl = 'https://drive.google.com/uc?id=1B3duMLNiErGcyk_s-P_jPQuHtLPq4eBx';
@@ -131,7 +128,11 @@
         },
         body: JSON.stringify({
           userId: userId,
-          group: group, // บันทึกเฉพาะค่ากลุ่ม
+          sugarLevel: sugar,
+          bloodPressureSys: pressureSys,
+          bloodPressureDia: pressureDia,
+          bmi: bmi,
+          group: group // เพิ่มการส่งค่ากลุ่ม
         }),
       })
         .then((response) => {
@@ -154,6 +155,7 @@
           userId: userId,
           message: healthMessage,
           imageUrl: imageUrl,
+          group: group // เพิ่มการส่งค่ากลุ่มไปพร้อมข้อความ
         }),
       })
         .then((response) => {
